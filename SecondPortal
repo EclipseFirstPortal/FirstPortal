@@ -637,7 +637,7 @@ do
 			};
 			
 			local FentFun = Instance.new("ScreenGui", Path)
-			FentFun.Name = "fent.fun"
+			FentFun.Name = "Eclipse"
 			FentFun.DisplayOrder = 1000
 			FentFun.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -650,7 +650,7 @@ do
 			ImageLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
 			ImageLabel.BorderSizePixel = 0
 			ImageLabel.Position = UDim2.new(0.1, 0, 0.1, 0)
-			ImageLabel.Size = UDim2.new(0, 700, 0, 550)
+			ImageLabel.Size = UDim2.new(0, 700, 0, 610)
 
 			local MainFrame = Instance.new("TextButton")
 			MainFrame.Name = "MainFrame"
@@ -4257,56 +4257,243 @@ G2L.u.SortOrder = Enum.SortOrder.LayoutOrder
 G2L.u.FillDirection = Enum.FillDirection.Vertical
 G2L.u.HorizontalAlignment = Enum.HorizontalAlignment.Right
 
-wcamera = workspace.CurrentCamera
-localplayer = game.Players.LocalPlayer
-runs = game:GetService("RunService")
-tweens = game:GetService("TweenService")
-uis = game:GetService("UserInputService")
-aimbool = false
-aimselftrack = true
-aimbots = false
-aimvischeck = false
-aimmousefov = false
-aimfakewait = true
-aimpart = "Head"
-aimfov = 150
-aimchance = 100
-aimtarget = nil
-aimtargetpart = nil
-aimfovcircle = Drawing.new("Circle")
-aimfovcircle_outer = Drawing.new("Circle")
-aimfovcircle_inner = Drawing.new("Circle")
-aimfovcircle_fill = Drawing.new("Circle")
-Bullet = require(game.ReplicatedStorage.Modules.FPS.Bullet)
-aimogfunc = Bullet.CreateBullet
-aimignoreparts = {}
-aimfriendcheck = false
-hitsoundvolume = 0.5
-a1table = nil
-aimfovfill_enabled = false
-aimfovfill_transparency = 0.3
-targetui_enabled = false
-last_target_update = 0
-target_update_cooldown = 0.1
-last_health = 0
-last_target = nil
-last_ui_pos = G2L.b.Position
-last_aimtarget = nil
-is_ui_visible = false
-tweening = false
-replicatedPlayers = game.ReplicatedStorage:WaitForChild("Players")
-showTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-hideTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-multibullet = false
-multibullet_count = 1
+G2L = {}
 
-for _, v in ipairs(workspace:GetDescendants()) do
-    if v:GetAttribute("PassThrough") then
-        table.insert(aimignoreparts, v)
-    end
-end
-selftrack_data = {}
-selftrack_update = 0
+-- Cache services
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local Workspace = workspace
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+local Bullet = require(ReplicatedStorage.Modules.FPS.Bullet)
+
+-- Initialize UI
+G2L.a = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+G2L.a.Name = "TargetInfo"
+G2L.a.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+G2L.a.ResetOnSpawn = false
+G2L.a.Enabled = false
+
+G2L.b = Instance.new("Frame", G2L.a)
+G2L.b.BorderSizePixel = 0
+G2L.b.BackgroundColor3 = Color3.fromRGB(23, 23, 23)
+G2L.b.Size = UDim2.new(0, 212, 0, 272)
+G2L.b.Position = UDim2.new(0.09416, 0, 0.31178, -1)
+G2L.b.Name = "MainFrame"
+G2L.b.BackgroundTransparency = 1
+
+G2L.c = Instance.new("UIStroke", G2L.b)
+G2L.c.Color = Color3.fromRGB(51, 51, 51)
+G2L.c.Transparency = 1
+
+G2L["15"] = Instance.new("UIDragDetector", G2L.b)
+
+G2L.d = Instance.new("Frame", G2L.b)
+G2L.d.BorderSizePixel = 0
+G2L.d.BackgroundColor3 = Color3.fromRGB(116, 101, 216)
+G2L.d.Size = UDim2.new(0.04245, 203, 0.01, 0)
+G2L.d.Name = "DecorativeFrame"
+G2L.d.BackgroundTransparency = 1
+
+G2L.e = Instance.new("Frame", G2L.b)
+G2L.e.BorderSizePixel = 0
+G2L.e.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+G2L.e.Size = UDim2.new(0, 202, 0, -258)
+G2L.e.Position = UDim2.new(0.02358, 0, 0.97426, 0)
+G2L.e.Name = "HolderName"
+G2L.e.BackgroundTransparency = 1
+
+G2L.f = Instance.new("UIStroke", G2L.e)
+G2L.f.Color = Color3.fromRGB(51, 51, 51)
+G2L.f.Transparency = 1
+
+local SourceSansPro = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+G2L.g = Instance.new("TextLabel", G2L.e)
+G2L.g.BorderSizePixel = 0
+G2L.g.TextSize = 14
+G2L.g.BackgroundColor3 = Color3.new(1, 1, 1)
+G2L.g.FontFace = SourceSansPro
+G2L.g.TextColor3 = Color3.fromRGB(223, 223, 223)
+G2L.g.BackgroundTransparency = 1
+G2L.g.Size = UDim2.new(0, 49, 0, 23)
+G2L.g.Text = "Name:"
+G2L.g.Position = UDim2.new(0.02, 0, 0.02713, 0)
+G2L.g.TextTransparency = 1
+
+G2L.h = Instance.new("TextLabel", G2L.e)
+G2L.h.AnchorPoint = Vector2.new(1, 0)
+G2L.h.BorderSizePixel = 0
+G2L.h.TextSize = 14
+G2L.h.BackgroundColor3 = Color3.new(1, 1, 1)
+G2L.h.TextDirection = Enum.TextDirection.RightToLeft
+G2L.h.FontFace = SourceSansPro
+G2L.h.TextColor3 = Color3.fromRGB(223, 223, 223)
+G2L.h.BackgroundTransparency = 1
+G2L.h.Size = UDim2.new(0, 140, 0, 23)
+G2L.h.Text = "TargetName"
+G2L.h.Name = "TargetName"
+G2L.h.Position = UDim2.new(0.99, -5, 0.03876, 0)
+G2L.h.TextXAlignment = Enum.TextXAlignment.Right
+G2L.h.TextTransparency = 1
+
+G2L.i = Instance.new("TextLabel", G2L.e)
+G2L.i.SizeConstraint = Enum.SizeConstraint.RelativeXX
+G2L.i.BorderSizePixel = 0
+G2L.i.AutoLocalize = false
+G2L.i.TextSize = 14
+G2L.i.BackgroundColor3 = Color3.new(1, 1, 1)
+G2L.i.FontFace = SourceSansPro
+G2L.i.TextColor3 = Color3.fromRGB(223, 223, 223)
+G2L.i.BackgroundTransparency = 1
+G2L.i.Size = UDim2.new(0, 40, 0, 27)
+G2L.i.Text = "HP:"
+G2L.i.Position = UDim2.new(0.02, 0, 0.08, 0)
+G2L.i.TextTransparency = 1
+
+G2L.j = Instance.new("TextLabel", G2L.e)
+G2L.j.AnchorPoint = Vector2.new(1, 0)
+G2L.j.SizeConstraint = Enum.SizeConstraint.RelativeXX
+G2L.j.BorderSizePixel = 0
+G2L.j.AutoLocalize = false
+G2L.j.TextSize = 14
+G2L.j.BackgroundColor3 = Color3.new(1, 1, 1)
+G2L.j.TextDirection = Enum.TextDirection.RightToLeft
+G2L.j.FontFace = SourceSansPro
+G2L.j.TextColor3 = Color3.fromRGB(223, 223, 223)
+G2L.j.BackgroundTransparency = 1
+G2L.j.Size = UDim2.new(0, 50, 0, 27)
+G2L.j.Text = "0"
+G2L.j.Name = "TargetHealthText"
+G2L.j.Position = UDim2.new(0.99, -5, 0.08, 0)
+G2L.j.TextXAlignment = Enum.TextXAlignment.Right
+G2L.j.TextTransparency = 1
+
+G2L.k = Instance.new("Frame", G2L.e)
+G2L.k.BorderSizePixel = 0
+G2L.k.BackgroundColor3 = Color3.fromRGB(11, 11, 11)
+G2L.k.Size = UDim2.new(0, 190, 0, 11)
+G2L.k.Position = UDim2.new(0.04, 0, 0.175, 0)
+G2L.k.Name = "Healthbarempty"
+G2L.k.BackgroundTransparency = 1
+
+G2L.l = Instance.new("UICorner", G2L.k)
+G2L.l.CornerRadius = UDim.new(0, 2)
+
+G2L.m = Instance.new("UIStroke", G2L.k)
+G2L.m.Color = Color3.fromRGB(32, 32, 32)
+G2L.m.Transparency = 1
+
+G2L.n = Instance.new("TextLabel", G2L.e)
+G2L.n.SizeConstraint = Enum.SizeConstraint.RelativeXX
+G2L.n.BorderSizePixel = 0
+G2L.n.AutoLocalize = false
+G2L.n.TextSize = 14
+G2L.n.BackgroundColor3 = Color3.new(1, 1, 1)
+G2L.n.FontFace = SourceSansPro
+G2L.n.TextColor3 = Color3.fromRGB(223, 223, 223)
+G2L.n.BackgroundTransparency = 1
+G2L.n.Size = UDim2.new(0, 40, 0, 27)
+G2L.n.Text = "KDR:"
+G2L.n.Position = UDim2.new(0.02, 0, 0.20682, 0)
+G2L.n.TextTransparency = 1
+
+G2L.o = Instance.new("TextLabel", G2L.e)
+G2L.o.AnchorPoint = Vector2.new(1, 0)
+G2L.o.SizeConstraint = Enum.SizeConstraint.RelativeXX
+G2L.o.BorderSizePixel = 0
+G2L.o.AutoLocalize = false
+G2L.o.TextSize = 14
+G2L.o.BackgroundColor3 = Color3.new(1, 1, 1)
+G2L.o.TextDirection = Enum.TextDirection.RightToLeft
+G2L.o.FontFace = SourceSansPro
+G2L.o.TextColor3 = Color3.fromRGB(223, 223, 223)
+G2L.o.BackgroundTransparency = 1
+G2L.o.Size = UDim2.new(0, 50, 0, 27)
+G2L.o.Text = "0"
+G2L.o.Name = "TargetKDR"
+G2L.o.Position = UDim2.new(0.99, -5, 0.2071, 0)
+G2L.o.TextXAlignment = Enum.TextXAlignment.Right
+G2L.o.TextTransparency = 1
+
+G2L.p = Instance.new("Frame", G2L.e)
+G2L.p.ZIndex = 2
+G2L.p.BorderSizePixel = 0
+G2L.p.BackgroundColor3 = Color3.fromRGB(116, 101, 216)
+G2L.p.Size = UDim2.new(0, 190, 0, 11)
+G2L.p.Position = UDim2.new(0.04, 0, 0.175, 0)
+G2L.p.Name = "HealthBar"
+G2L.p.BackgroundTransparency = 1
+
+G2L.q = Instance.new("UICorner", G2L.p)
+G2L.q.CornerRadius = UDim.new(0, 2)
+
+G2L.r = Instance.new("UIStroke", G2L.p)
+G2L.r.Color = Color3.fromRGB(32, 32, 32)
+G2L.r.Transparency = 1
+
+G2L.s = Instance.new("ScrollingFrame", G2L.e)
+G2L.s.BorderSizePixel = 0
+G2L.s.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+G2L.s.Size = UDim2.new(0, 190, 0, 167)
+G2L.s.Position = UDim2.new(0.0297, 0, 0.32171, 0)
+G2L.s.Name = "InventoryHolder"
+G2L.s.ScrollBarThickness = 1
+G2L.s.CanvasPosition = Vector2.new()
+G2L.s.BackgroundTransparency = 1
+
+G2L.t = Instance.new("UIStroke", G2L.s)
+G2L.t.Color = Color3.fromRGB(32, 32, 32)
+G2L.t.Transparency = 1
+
+G2L.u = Instance.new("UIListLayout", G2L.s)
+G2L.u.Padding = UDim.new(0, 0)
+G2L.u.SortOrder = Enum.SortOrder.LayoutOrder
+G2L.u.FillDirection = Enum.FillDirection.Vertical
+G2L.u.HorizontalAlignment = Enum.HorizontalAlignment.Right
+
+-- Global variables
+local aimbool = false
+local aimselftrack = true
+local aimbots = false
+local aimvischeck = false
+local aimmousefov = false
+local aimfakewait = true
+local aimpart = "Head"
+local aimfov = 150
+local aimchance = 100
+local aimtarget = nil
+local aimtargetpart = nil
+local aimfovcircle = Drawing.new("Circle")
+local aimfovcircle_outer = Drawing.new("Circle")
+local aimfovcircle_inner = Drawing.new("Circle")
+local aimfovcircle_fill = Drawing.new("Circle")
+local aimogfunc = Bullet.CreateBullet
+local aimignoreparts = {}
+local aimfriendcheck = false
+local hitsoundvolume = 0.5
+local a1table = nil
+local aimfovfill_enabled = false
+local aimfovfill_transparency = 0.3
+local targetui_enabled = false
+local last_target_update = 0
+local target_update_cooldown = 0.1
+local last_health = 0
+local last_target = nil
+local last_ui_pos = G2L.b.Position
+local last_aimtarget = nil
+local is_ui_visible = false
+local tweening = false
+local replicatedPlayers = ReplicatedStorage:WaitForChild("Players")
+local showTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+local hideTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+local multibullet = false
+local multibullet_count = 1
+local aimfovcircle_numsides = 32
+local selftrack_data = {}
+local selftrack_update = 0
 hitmarkbool = false
 hitsoundbool = false
 hitsoundhead = "Gamesense"
@@ -4325,18 +4512,20 @@ tractextures = {
     Glow = "http://www.roblox.com/asset/?id=78260707920108",
     Lighting = "http://www.roblox.com/asset/?id=131326755401058"
 }
-globalcurrentgun = nil
-globalammo = nil
-hitmarkcolor_new = Color3.new(1, 1, 1)
-fovcircle_enabled = false
+local globalcurrentgun = nil
+local globalammo = nil
+local hitmarkcolor_new = Color3.new(1, 1, 1)
+local fovcircle_enabled = false
 
+-- Initialize FOV circles
 aimfovcircle.Visible = false
 aimfovcircle.Radius = aimfov
 aimfovcircle.Thickness = 2
 aimfovcircle.Filled = false
 aimfovcircle.Transparency = 0.5
 aimfovcircle.Color = Color3.new(1, 1, 1)
-aimfovcircle.Position = Vector2.new(wcamera.ViewportSize.X / 2, wcamera.ViewportSize.Y / 2)
+aimfovcircle.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+aimfovcircle.NumSides = aimfovcircle_numsides
 
 aimfovcircle_outer.Visible = false
 aimfovcircle_outer.Radius = aimfov + 1
@@ -4344,7 +4533,8 @@ aimfovcircle_outer.Thickness = 1
 aimfovcircle_outer.Filled = false
 aimfovcircle_outer.Transparency = 1
 aimfovcircle_outer.Color = Color3.new()
-aimfovcircle_outer.Position = Vector2.new(wcamera.ViewportSize.X / 2, wcamera.ViewportSize.Y / 2)
+aimfovcircle_outer.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+aimfovcircle_outer.NumSides = aimfovcircle_numsides
 
 aimfovcircle_inner.Visible = false
 aimfovcircle_inner.Radius = aimfov - 1
@@ -4352,63 +4542,70 @@ aimfovcircle_inner.Thickness = 1
 aimfovcircle_inner.Filled = false
 aimfovcircle_inner.Transparency = 1
 aimfovcircle_inner.Color = Color3.new()
-aimfovcircle_inner.Position = Vector2.new(wcamera.ViewportSize.X / 2, wcamera.ViewportSize.Y / 2)
+aimfovcircle_inner.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+aimfovcircle_inner.NumSides = aimfovcircle_numsides
 
 aimfovcircle_fill.Visible = false
 aimfovcircle_fill.Radius = aimfov
 aimfovcircle_fill.Filled = true
 aimfovcircle_fill.Transparency = aimfovfill_transparency
 aimfovcircle_fill.Color = aimfovcircle.Color
-aimfovcircle_fill.Position = Vector2.new(wcamera.ViewportSize.X / 2, wcamera.ViewportSize.Y / 2)
+aimfovcircle_fill.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+aimfovcircle_fill.NumSides = aimfovcircle_numsides
+
+-- Cache UI elements for tweening
+local uiFrames = {G2L.b, G2L.d, G2L.e, G2L.k, G2L.p, G2L.s}
+local uiStrokes = {G2L.c, G2L.f, G2L.m, G2L.r, G2L.t}
+local uiTextLabels = {G2L.g, G2L.h, G2L.i, G2L.j, G2L.n, G2L.o}
+
+-- Initialize aimignoreparts
+for _, v in ipairs(Workspace:GetDescendants()) do
+    if v:GetAttribute("PassThrough") then
+        table.insert(aimignoreparts, v)
+    end
+end
+
+-- Initialize selftrack_data
+for i = 10, 1000, 10 do
+    selftrack_data[i] = LocalPlayer.Character and LocalPlayer.Character.HumanoidRootPart and LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 1.3, 0) or Vector3.zero
+end
 
 function showUI()
     if tweening or is_ui_visible then return end
     tweening = true
     G2L.a.Enabled = true
     G2L.b.Position = last_ui_pos
-    G2L.b.BackgroundTransparency = 1
-    G2L.d.BackgroundTransparency = 1
-    G2L.e.BackgroundTransparency = 1
-    G2L.k.BackgroundTransparency = 1
-    G2L.p.BackgroundTransparency = 1
-    G2L.s.BackgroundTransparency = 1
-    for _, v in ipairs({G2L.g, G2L.h, G2L.i, G2L.j, G2L.n, G2L.o}) do
-        v.TextTransparency = 1
+    for _, frame in ipairs(uiFrames) do
+        frame.BackgroundTransparency = 1
+    end
+    for _, stroke in ipairs(uiStrokes) do
+        stroke.Transparency = 1
+    end
+    for _, label in ipairs(uiTextLabels) do
+        label.TextTransparency = 1
     end
     for _, v in ipairs(G2L.s:GetChildren()) do
         if v:IsA("TextLabel") then
             v.TextTransparency = 1
         end
     end
-    for _, v in ipairs({G2L.c, G2L.f, G2L.m, G2L.r, G2L.t}) do
-        v.Transparency = 1
+    local tweensList = {}
+    for _, frame in ipairs(uiFrames) do
+        table.insert(tweensList, TweenService:Create(frame, showTweenInfo, {BackgroundTransparency = 0}))
     end
-    local t = {}
-    for _, v in ipairs({
-        {G2L.b, {BackgroundTransparency = 0}},
-        {G2L.d, {BackgroundTransparency = 0}},
-        {G2L.e, {BackgroundTransparency = 0}},
-        {G2L.k, {BackgroundTransparency = 0}},
-        {G2L.p, {BackgroundTransparency = 0}},
-        {G2L.s, {BackgroundTransparency = 0}},
-        {G2L.c, {Transparency = 0}},
-        {G2L.f, {Transparency = 0}},
-        {G2L.m, {Transparency = 0}},
-        {G2L.r, {Transparency = 0}},
-        {G2L.t, {Transparency = 0}}
-    }) do
-        table.insert(t, tweens:Create(v[1], showTweenInfo, v[2]))
+    for _, stroke in ipairs(uiStrokes) do
+        table.insert(tweensList, TweenService:Create(stroke, showTweenInfo, {Transparency = 0}))
     end
-    for _, v in ipairs({G2L.g, G2L.h, G2L.i, G2L.j, G2L.n, G2L.o}) do
-        table.insert(t, tweens:Create(v, showTweenInfo, {TextTransparency = 0}))
+    for _, label in ipairs(uiTextLabels) do
+        table.insert(tweensList, TweenService:Create(label, showTweenInfo, {TextTransparency = 0}))
     end
     for _, v in ipairs(G2L.s:GetChildren()) do
         if v:IsA("TextLabel") then
-            table.insert(t, tweens:Create(v, showTweenInfo, {TextTransparency = 0}))
+            table.insert(tweensList, TweenService:Create(v, showTweenInfo, {TextTransparency = 0}))
         end
     end
-    for _, v in ipairs(t) do
-        v:Play()
+    for _, tween in ipairs(tweensList) do
+        tween:Play()
     end
     task.delay(0.2, function()
         tweening = false
@@ -4420,32 +4617,23 @@ function hideUI()
     if tweening or not is_ui_visible then return end
     tweening = true
     G2L.b.Position = last_ui_pos
-    local t = {}
-    for _, v in ipairs({
-        {G2L.b, {BackgroundTransparency = 1}},
-        {G2L.d, {BackgroundTransparency = 1}},
-        {G2L.e, {BackgroundTransparency = 1}},
-        {G2L.k, {BackgroundTransparency = 1}},
-        {G2L.p, {BackgroundTransparency = 1}},
-        {G2L.s, {BackgroundTransparency = 1}},
-        {G2L.c, {Transparency = 1}},
-        {G2L.f, {Transparency = 1}},
-        {G2L.m, {Transparency = 1}},
-        {G2L.r, {Transparency = 1}},
-        {G2L.t, {Transparency = 1}}
-    }) do
-        table.insert(t, tweens:Create(v[1], hideTweenInfo, v[2]))
+    local tweensList = {}
+    for _, frame in ipairs(uiFrames) do
+        table.insert(tweensList, TweenService:Create(frame, hideTweenInfo, {BackgroundTransparency = 1}))
     end
-    for _, v in ipairs({G2L.g, G2L.h, G2L.i, G2L.j, G2L.n, G2L.o}) do
-        table.insert(t, tweens:Create(v, hideTweenInfo, {TextTransparency = 1}))
+    for _, stroke in ipairs(uiStrokes) do
+        table.insert(tweensList, TweenService:Create(stroke, hideTweenInfo, {Transparency = 1}))
+    end
+    for _, label in ipairs(uiTextLabels) do
+        table.insert(tweensList, TweenService:Create(label, hideTweenInfo, {TextTransparency = 1}))
     end
     for _, v in ipairs(G2L.s:GetChildren()) do
         if v:IsA("TextLabel") then
-            table.insert(t, tweens:Create(v, hideTweenInfo, {TextTransparency = 1}))
+            table.insert(tweensList, TweenService:Create(v, hideTweenInfo, {TextTransparency = 1}))
         end
     end
-    for _, v in ipairs(t) do
-        v:Play()
+    for _, tween in ipairs(tweensList) do
+        tween:Play()
     end
     task.delay(0.2, function()
         G2L.a.Enabled = false
@@ -4456,21 +4644,15 @@ end
 
 function getcurrentgun(plr)
     local char = plr.Character
-    if not char then return nil, nil end
-    local invchar = game.ReplicatedStorage.Players:FindFirstChild(game.Players.LocalPlayer.Name).Inventory
-    if not invchar then return nil, nil end
-    local gun = nil
-    local gunname = nil
-    local guninv = nil
+    if not char then return nil, nil, nil end
+    local invchar = replicatedPlayers:FindFirstChild(LocalPlayer.Name).Inventory
+    if not invchar then return nil, nil, nil end
     for _, desc in ipairs(char:GetDescendants()) do
         if desc:IsA("Model") and desc:FindFirstChild("ItemRoot") and desc:FindFirstChild("Attachments") then
-            gun = desc
-            gunname = desc.Name
-            guninv = invchar:FindFirstChild(gunname)
-            break
+            return desc.Name, desc, invchar:FindFirstChild(desc.Name)
         end
     end
-    return gunname, gun, guninv
+    return nil, nil, nil
 end
 
 function getcurrentammo(gun)
@@ -4479,36 +4661,32 @@ function getcurrentammo(gun)
     if not loadedfold then return nil end
     local firstammo = loadedfold:FindFirstChild("1")
     if not firstammo then return nil end
-    local ammoname = firstammo:GetAttribute("AmmoType")
-    return game.ReplicatedStorage.AmmoTypes:FindFirstChild(ammoname)
+    return ReplicatedStorage.AmmoTypes:FindFirstChild(firstammo:GetAttribute("AmmoType"))
 end
 
 function get_ammo_in_magazine()
-    local Players = game:GetService("Players")
-    local ReplicatedStorage = game:GetService("ReplicatedStorage")
-    local LocalPlayer = Players.LocalPlayer
-    local Player = ReplicatedStorage.Players:FindFirstChild(LocalPlayer.Name)
+    local Player = replicatedPlayers:FindFirstChild(LocalPlayer.Name)
     if not Player then return 0 end
     local weapon = Player.Status and Player.Status.GameplayVariables and Player.Status.GameplayVariables.EquippedTool and Player.Status.GameplayVariables.EquippedTool.Value
     if not weapon or weapon == "None" then return 0 end
     local inv_weapon = Player.Inventory and Player.Inventory:FindFirstChild(weapon.Name)
     local magazine = inv_weapon and inv_weapon.Attachments and inv_weapon.Attachments.Magazine and inv_weapon.Attachments.Magazine:FindFirstChildOfClass("StringValue")
-    loadedammo = magazine and magazine.ItemProperties and magazine.ItemProperties.LoadedAmmo and magazine.ItemProperties.LoadedAmmo:FindFirstChildOfClass("Folder")
+    local loadedammo = magazine and magazine.ItemProperties and magazine.ItemProperties.LoadedAmmo and magazine.ItemProperties.LoadedAmmo:FindFirstChildOfClass("Folder")
     return loadedammo and loadedammo:GetAttribute("Amount") or 0
 end
 
 function runtracer(start, endp)
     if start == Vector3.zero or endp == Vector3.zero then return end
-    local beam = Instance.new("Beam", workspace)
+    local beam = Instance.new("Beam", Workspace)
     beam.Name = "LineBeam"
-    local startpart = Instance.new("Part", workspace)
+    local startpart = Instance.new("Part", Workspace)
     startpart.CanCollide = false
     startpart.CanQuery = false
     startpart.Transparency = 1
     startpart.Position = start
     startpart.Anchored = true
     startpart.Size = Vector3.new(0.01, 0.01, 0.01)
-    local endpart = Instance.new("Part", workspace)
+    local endpart = Instance.new("Part", Workspace)
     endpart.CanCollide = false
     endpart.CanQuery = false
     endpart.Transparency = 1
@@ -4540,19 +4718,19 @@ function runtracer(start, endp)
 end
 
 function isonscreen(object)
-    local _, onScreen = wcamera:WorldToScreenPoint(object.Position)
+    local _, onScreen = Camera:WorldToScreenPoint(object.Position)
     return onScreen
 end
 
-v311 = require(game.ReplicatedStorage.Modules:WaitForChild("UniversalTables"))
-globalist11 = v311.ReturnTable("GlobalIgnoreListProjectile")
+local UniversalTables = require(ReplicatedStorage.Modules:WaitForChild("UniversalTables"))
+local globalist11 = UniversalTables.ReturnTable("GlobalIgnoreListProjectile")
 function isvisible(char, object)
-    if not localplayer.Character or not localplayer.Character:FindFirstChild("HumanoidRootPart") or not aimvischeck then
+    if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or not aimvischeck then
         return true
     end
-    local origin = localplayer.Character.HumanoidRootPart.Position + Vector3.new(0, 1.3, 0)
+    local origin = LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 1.3, 0)
     if aimselftrack then
-        local plrping = localplayer:GetNetworkPing() * 1000 + 5
+        local plrping = LocalPlayer:GetNetworkPing() * 1000 + 5
         local key = math.floor(plrping / 10) * 10
         local onv = selftrack_data[key]
         if onv then origin = onv end
@@ -4561,46 +4739,45 @@ function isvisible(char, object)
     local params = RaycastParams.new()
     params.IgnoreWater = true
     params.CollisionGroup = "WeaponRay"
-    params.FilterDescendantsInstances = {localplayer.Character, wcamera, globalist11, unpack(aimignoreparts)}
+    params.FilterDescendantsInstances = {LocalPlayer.Character, Camera, globalist11, unpack(aimignoreparts)}
     local dir = (object.Position - origin).Unit
     local dist = (object.Position - origin).Magnitude + 5
-    local ray = workspace:Raycast(origin, dir * dist, params)
+    local ray = Workspace:Raycast(origin, dir * dist, params)
     if ray and ray.Instance:IsDescendantOf(char) then
         return true
     elseif ray and ray.Instance.Name ~= "Terrain" and not ray.Instance:GetAttribute("NoPen") then
         local armorpen4 = globalammo and globalammo:GetAttribute("ArmorPen") or 10
-        local FunctionLibraryExtension = require(game.ReplicatedStorage.Modules.FunctionLibraryExtension)
+        local FunctionLibraryExtension = require(ReplicatedStorage.Modules.FunctionLibraryExtension)
         local armorpen1, newpos2 = FunctionLibraryExtension.Penetration(FunctionLibraryExtension, ray.Instance, ray.Position, dir, armorpen4)
         if not armorpen1 or not newpos2 then return false end
         local neworigin = ray.Position + dir * 0.01
-        local newray = workspace:Raycast(neworigin, dir * (dist - (neworigin - origin).Magnitude), params)
+        local newray = Workspace:Raycast(neworigin, dir * (dist - (neworigin - origin).Magnitude), params)
         return newray and newray.Instance:IsDescendantOf(char)
     end
     return false
 end
 
 function IsFriend(player)
-    return localplayer:IsFriendsWith(player.UserId)
+    return LocalPlayer:IsFriendsWith(player.UserId)
 end
 
 function choosetarget()
     if tick() - last_target_update < target_update_cooldown then return end
     last_target_update = tick()
-    local cent = aimmousefov and uis:GetMouseLocation() or Vector2.new(wcamera.ViewportSize.X / 2, wcamera.ViewportSize.Y / 2)
+    local cent = aimmousefov and UserInputService:GetMouseLocation() or Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     local cdist = math.huge
     local ctar, cpart
     local function chooseTpart(charact)
         return charact:FindFirstChild(aimpart == "Head" and "Head" or aimpart == "HeadTop" and "HeadTopHitBox" or aimpart == "Face" and "FaceHitBox" or aimpart == "Torso" and "UpperTorso" or "HumanoidRootPart")
     end
     if aimbots then
-        for _, botfold in ipairs(workspace.AiZones:GetChildren()) do
+        for _, botfold in ipairs(Workspace.AiZones:GetChildren()) do
             for _, bot in ipairs(botfold:GetChildren()) do
                 if bot:IsA("Model") and bot:FindFirstChild("Humanoid") and bot.Humanoid.Health > 0 then
                     local potroot = chooseTpart(bot)
-                    if potroot and localplayer.Character then
-                        local spoint = wcamera:WorldToViewportPoint(potroot.Position)
-                        local optpoint = Vector2.new(spoint.X, spoint.Y)
-                        local dist = (optpoint - cent).Magnitude
+                    if potroot and LocalPlayer.Character then
+                        local spoint = Camera:WorldToViewportPoint(potroot.Position)
+                        local dist = (Vector2.new(spoint.X, spoint.Y) - cent).Magnitude
                         if dist <= aimfovcircle.Radius and dist < cdist and isvisible(bot, potroot) and isonscreen(potroot) then
                             cdist = dist
                             ctar = bot
@@ -4611,13 +4788,12 @@ function choosetarget()
             end
         end
     end
-    for _, pottar in ipairs(game.Players:GetPlayers()) do
-        if pottar ~= localplayer and pottar.Character and localplayer.Character.PrimaryPart and (not aimfriendcheck or not IsFriend(pottar)) then
+    for _, pottar in ipairs(Players:GetPlayers()) do
+        if pottar ~= LocalPlayer and pottar.Character and LocalPlayer.Character.PrimaryPart and (not aimfriendcheck or not IsFriend(pottar)) then
             local potroot = chooseTpart(pottar.Character)
             if potroot then
-                local spoint = wcamera:WorldToViewportPoint(potroot.Position)
-                local optpoint = Vector2.new(spoint.X, spoint.Y)
-                local dist = (optpoint - cent).Magnitude
+                local spoint = Camera:WorldToViewportPoint(potroot.Position)
+                local dist = (Vector2.new(spoint.X, spoint.Y) - cent).Magnitude
                 if dist <= aimfovcircle.Radius and dist < cdist and isvisible(pottar.Character, potroot) and isonscreen(potroot) then
                     cdist = dist
                     ctar = pottar
@@ -4690,7 +4866,7 @@ function updateInventoryText(targetPlayer)
                 itemLabel.TextColor3 = Color3.fromRGB(223, 223, 223)
                 itemLabel.BackgroundTransparency = 1
                 itemLabel.TextSize = 14
-                itemLabel.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json")
+                itemLabel.FontFace = SourceSansPro
                 itemLabel.TextXAlignment = Enum.TextXAlignment.Right
                 itemLabel.TextYAlignment = Enum.TextYAlignment.Top
                 itemLabel.BorderSizePixel = 0
@@ -4706,10 +4882,10 @@ function updateInventoryText(targetPlayer)
     end
 end
 
-hitmarkfade = 2
+local hitmarkfade = 2
 function runhitmark(v140)
     if not hitmarkbool then return end
-    local hitpart = Instance.new("Part", workspace)
+    local hitpart = Instance.new("Part", Workspace)
     hitpart.Transparency = 1
     hitpart.CanCollide = false
     hitpart.CanQuery = false
@@ -4729,126 +4905,106 @@ function runhitmark(v140)
     hit_img.Rotation = 45
     hit_img.AnchorPoint = Vector2.new(0.5, 0.5)
     task.spawn(function()
-        tweens:Create(hit_img, TweenInfo.new(hitmarkfade, Enum.EasingStyle.Sine), {ImageTransparency = 1}):Play()
-        tweens:Create(hit_img, TweenInfo.new(hitmarkfade, Enum.EasingStyle.Linear), {Rotation = 180}):Play()
+        TweenService:Create(hit_img, TweenInfo.new(hitmarkfade, Enum.EasingStyle.Sine), {ImageTransparency = 1}):Play()
+        TweenService:Create(hit_img, TweenInfo.new(hitmarkfade, Enum.EasingStyle.Linear), {Rotation = 180}):Play()
         task.wait(hitmarkfade)
         hit_img:Destroy()
         hit:Destroy()
     end)
 end
 
-aimmodfunc = function(prikol, p49, p50, p_u_51, aimpart, _, p52, p53, p54)
-    local v_u_6 = game.ReplicatedStorage.Remotes.VisualProjectile
-    local v_u_7 = game.ReplicatedStorage.Remotes.FireProjectile
-    local target = aimtarget
-    local target_part
-    local v_u_4 = require(game.ReplicatedStorage.Modules:WaitForChild("FunctionLibraryExtension"))
-    local v_u_15 = localplayer
-    local v_u_115 = v_u_4:GetEstimatedCameraPosition(v_u_15)
-    local v_u_16 = replicatedPlayers:FindFirstChild(v_u_15.Name)
-    local v_u_64 = v_u_16.Status.GameplayVariables:GetAttribute("ed")
-    local virtual_vfx = require(game.ReplicatedStorage.Modules:WaitForChild("VFX"))
-    local v3 = require(game.ReplicatedStorage.Modules:WaitForChild("UniversalTables"))
-    local v_u_5 = game.ReplicatedStorage.Remotes.ProjectileInflict
-    local v_u_10 = game.ReplicatedStorage
-    local v_u_12 = v_u_10:WaitForChild("RangedWeapons")
-    local v_u_17 = v_u_10:WaitForChild("Temp")
-    local v_u_56 = v_u_15.Character
-    local v135 = 500000
-    local v_u_18 = v3.ReturnTable("GlobalIgnoreListProjectile")
-    local v65 = v_u_10.AmmoTypes:FindFirstChild(p52)
-    local v_u_74 = v65:GetAttribute("Pellets")
-    local v60 = p50.ItemRoot
-    local v61 = p49.ItemProperties
-    local v62 = v_u_12:FindFirstChild(p49.Name)
-    local v63 = v61:FindFirstChild("SpecialProperties")
-    local v_u_66 = v63 and v63:GetAttribute("TracerColor") or v62:GetAttribute("ProjectileColor")
-    local bulletspeed = v65:GetAttribute("MuzzleVelocity")
-    local armorpen4 = v65:GetAttribute("ArmorPen")
+function aimmodfunc(prikol, p49, p50, p_u_51, aimpart, _, p52, p53, p54)
+    local VisualProjectile = ReplicatedStorage.Remotes.VisualProjectile
+    local FireProjectile = ReplicatedStorage.Remotes.FireProjectile
+    local FunctionLibraryExtension = require(ReplicatedStorage.Modules:WaitForChild("FunctionLibraryExtension"))
+    local vfx = require(ReplicatedStorage.Modules:WaitForChild("VFX"))
+    local UniversalTables = require(ReplicatedStorage.Modules:WaitForChild("UniversalTables"))
+    local ProjectileInflict = ReplicatedStorage.Remotes.ProjectileInflict
+    local RangedWeapons = ReplicatedStorage:WaitForChild("RangedWeapons")
+    local Temp = ReplicatedStorage:WaitForChild("Temp")
+    local char = LocalPlayer.Character
+    local cameraPos = FunctionLibraryExtension:GetEstimatedCameraPosition(LocalPlayer)
+    local playerData = replicatedPlayers:FindFirstChild(LocalPlayer.Name)
+    local ed = playerData.Status.GameplayVariables:GetAttribute("ed")
+    local ignoreList = UniversalTables.ReturnTable("GlobalIgnoreListProjectile")
+    local ammo = ReplicatedStorage.AmmoTypes:FindFirstChild(p52)
+    local pellets = ammo:GetAttribute("Pellets")
+    local itemRoot = p50.ItemRoot
+    local itemProps = p49.ItemProperties
+    local weaponData = RangedWeapons:FindFirstChild(p49.Name)
+    local specialProps = itemProps:FindFirstChild("SpecialProperties")
+    local tracerColor = specialProps and specialProps:GetAttribute("TracerColor") or weaponData:GetAttribute("ProjectileColor")
+    local bulletspeed = ammo:GetAttribute("MuzzleVelocity")
+    local armorpen = ammo:GetAttribute("ArmorPen")
     local tracerendpos = Vector3.zero
-    local v79 = {x = {Value = 0}, y = {Value = 0}}
-    if v_u_56:FindFirstChild(p49.Name) then
-        local v83, v82 = 0.001, 0.001
-        local v81 = v61.Tool:GetAttribute("MuzzleDevice") or "Default"
-        if v61.Tool:GetAttribute("MuzzleDevice") or "Default" == "Suppressor" then
-            if tick() - p53 < 0.8 then
-                v_u_4:PlaySoundV2(v60.Sounds.FireSoundSupressed, v60.Sounds.FireSoundSupressed.TimeLength, v_u_17)
-            else
-                v_u_4:PlaySoundV2(v60.Sounds.FireSoundSupressed, v60.Sounds.FireSoundSupressed.TimeLength, v_u_17)
-            end
-        elseif tick() - p53 < 0.8 then
-            v_u_4:PlaySoundV2(v60.Sounds.FireSound, v60.Sounds.FireSound.TimeLength, v_u_17)
+    local recoil = {x = {Value = 0}, y = {Value = 0}}
+    if char:FindFirstChild(p49.Name) then
+        local fireSound, soundLength
+        local muzzleDevice = itemProps.Tool:GetAttribute("MuzzleDevice") or "Default"
+        if muzzleDevice == "Suppressor" then
+            fireSound = itemRoot.Sounds.FireSoundSupressed
+            soundLength = fireSound.TimeLength
         else
-            v_u_4:PlaySoundV2(v60.Sounds.FireSound, v60.Sounds.FireSound.TimeLength, v_u_17)
+            fireSound = itemRoot.Sounds.FireSound
+            soundLength = fireSound.TimeLength
         end
-        local v_u_59 = p_u_51.Item.Attachments:FindFirstChild("Front") and p_u_51.Item.Attachments.Front:GetChildren()[1].Barrel or p_u_51.Item.Barrel
-        if target and aimtargetpart then
-            target_part = aimtargetpart
-            v_u_103 = CFrame.new(v_u_115, target_part.Position).LookVector
-            v_u_114 = v_u_103
+        if tick() - p53 < 0.8 then
+            FunctionLibraryExtension:PlaySoundV2(fireSound, soundLength, Temp)
         else
-            target_part = aimpart
-            v_u_103 = CFrame.new(v_u_115, v_u_15:GetMouse().Hit.Position).LookVector
-            v_u_114 = v_u_103
+            FunctionLibraryExtension:PlaySoundV2(fireSound, soundLength, Temp)
         end
-        local function v185(bullet_id)
-            local v_u_110 = RaycastParams.new()
-            v_u_110.FilterType = Enum.RaycastFilterType.Exclude
-            v_u_110.FilterDescendantsInstances = {v_u_56, p_u_51, v_u_18, unpack(aimignoreparts)}
-            v_u_110.CollisionGroup = "WeaponRay"
-            v_u_110.IgnoreWater = true
+        local barrel = p_u_51.Item.Attachments:FindFirstChild("Front") and p_u_51.Item.Attachments.Front:GetChildren()[1].Barrel or p_u_51.Item.Barrel
+        local lookVector
+        if aimtarget and aimtargetpart then
+            lookVector = CFrame.new(cameraPos, aimtargetpart.Position).LookVector
+        else
+            lookVector = CFrame.new(cameraPos, LocalPlayer:GetMouse().Hit.Position).LookVector
+        end
+        local function fireBullet(bullet_id)
+            local rayParams = RaycastParams.new()
+            rayParams.FilterType = Enum.RaycastFilterType.Exclude
+            rayParams.FilterDescendantsInstances = {char, p_u_51, ignoreList, unpack(aimignoreparts)}
+            rayParams.CollisionGroup = "WeaponRay"
+            rayParams.IgnoreWater = true
             task.spawn(function()
-                if not v_u_7:InvokeServer(v_u_114, bullet_id, tick()) then
-                    game.ReplicatedStorage.Modules.FPS.Binds.AdjustBullets:Fire(v_u_64, 1)
+                if not FireProjectile:InvokeServer(lookVector, bullet_id, tick()) then
+                    ReplicatedStorage.Modules.FPS.Binds.AdjustBullets:Fire(ed, 1)
                 end
             end)
-            local v_u_131
-            local v_u_132 = 0
+            local conn
             local penetrated = false
-            if aimfakewait and target then
-                local tpart = target:IsA("Model") and target.HumanoidRootPart or target.Character.HumanoidRootPart
-                local distance = (wcamera.CFrame.Position - tpart.CFrame.Position).Magnitude
+            if aimfakewait and aimtarget then
+                local tpart = aimtarget:IsA("Model") and aimtarget.HumanoidRootPart or aimtarget.Character.HumanoidRootPart
+                local distance = (Camera.CFrame.Position - tpart.CFrame.Position).Magnitude
                 task.wait(distance / bulletspeed + 0.01)
-                if aimtarget and aimtargetpart then
-                    target_part = aimtargetpart
-                    v_u_103 = CFrame.new(v_u_115, target_part.Position).LookVector
-                    v_u_114 = v_u_103
-                else
-                    target_part = aimpart
-                    v_u_103 = CFrame.new(v_u_115, v_u_15:GetMouse().Hit.Position).LookVector
-                    v_u_114 = v_u_103
-                end
+                lookVector = aimtarget and aimtargetpart and CFrame.new(cameraPos, aimtargetpart.Position).LookVector or CFrame.new(cameraPos, LocalPlayer:GetMouse().Hit.Position).LookVector
             end
-            v_u_6:FireServer(v_u_114, bullet_id)
-            local function v184(p134)
-                v_u_132 = p134
-                local v136 = workspace:Raycast(v_u_115, v_u_114 * v135, v_u_110)
-                local v137, v140, v138, v139
-                if v136 then
-                    v137, v140, v138, v139 = v136.Instance, v136.Position, v136.Normal, v136.Material
+            VisualProjectile:FireServer(lookVector, bullet_id)
+            local function updateRay(p134)
+                local ray = Workspace:Raycast(cameraPos, lookVector * 500000, rayParams)
+                local instance, position, normal, material
+                if ray then
+                    instance, position, normal, material = ray.Instance, ray.Position, ray.Normal, ray.Material
                 else
-                    v140 = v_u_115 + v_u_114 * v135
+                    position = cameraPos + lookVector * 500000
                 end
-                if not v137 then
-                    v_u_131:Disconnect()
+                if not instance then
+                    conn:Disconnect()
                     return
                 end
-                tracerendpos = v140
-                local v171 = v_u_4:FindDeepAncestor(v137, "Model")
-                if v171 and v171:FindFirstChild("Humanoid") then
+                tracerendpos = position
+                local model = FunctionLibraryExtension:FindDeepAncestor(instance, "Model")
+                if model and model:FindFirstChild("Humanoid") then
                     local ran = math.random(1, 100)
-                    local ranbool = ran <= aimchance
-                    local v175 = v137.CFrame:ToObjectSpace(CFrame.new(v140))
-                    if ranbool and target_part and not penetrated then
-                        v_u_5:FireServer(target_part, v175, bullet_id, tick())
-                    else
-                        v_u_5:FireServer(aimpart, v175, bullet_id, tick())
-                    end
-                    virtual_vfx.Impact(v137, v140, v138, v139, v_u_114, "Ranged", true)
+                    local hitTarget = ran <= aimchance and aimtargetpart and not penetrated
+                    local hitPart = hitTarget and aimtargetpart or aimpart
+                    local hitCFrame = instance.CFrame:ToObjectSpace(CFrame.new(position))
+                    ProjectileInflict:FireServer(hitPart, hitCFrame, bullet_id, tick())
+                    vfx.Impact(instance, position, normal, material, lookVector, "Ranged", true)
                     task.spawn(function()
-                        runhitmark(v140)
-                        if hitsoundbool and (v137.Name == "Head" or v137.Name == "UpperTorso") then
-                            local sound = Instance.new("Sound", workspace)
+                        runhitmark(position)
+                        if hitsoundbool and (instance.Name == "Head" or instance.Name == "UpperTorso") then
+                            local sound = Instance.new("Sound", Workspace)
                             sound.SoundId = hitsoundlib[hitsoundhead]
                             sound.Volume = hitsoundvolume
                             sound:Play()
@@ -4856,51 +5012,49 @@ aimmodfunc = function(prikol, p49, p50, p_u_51, aimpart, _, p52, p53, p54)
                             sound:Destroy()
                         end
                     end)
-                elseif v137.Name == "Terrain" then
-                    local v175 = v137.CFrame:ToObjectSpace(CFrame.new(v140))
-                    v_u_5:FireServer(v137, v175, bullet_id, tick())
-                    virtual_vfx.Impact(v137, v140, v138, v139, v_u_114, "Ranged", true)
-                    task.spawn(function() runhitmark(v140) end)
+                elseif instance.Name == "Terrain" then
+                    local hitCFrame = instance.CFrame:ToObjectSpace(CFrame.new(position))
+                    ProjectileInflict:FireServer(instance, hitCFrame, bullet_id, tick())
+                    vfx.Impact(instance, position, normal, material, lookVector, "Ranged", true)
+                    task.spawn(function() runhitmark(position) end)
                 else
-                    virtual_vfx.Impact(v137, v140, v138, v139, v_u_114, "Ranged", true)
-                    task.spawn(function() runhitmark(v140) end)
-                    local arg1, arg2, arg3 = v_u_4.Penetration(v_u_4, v137, v140, v_u_114, armorpen4)
-                    if not arg1 or not arg2 then
-                        local v175 = v137.CFrame:ToObjectSpace(CFrame.new(v140))
-                        v_u_5:FireServer(v137, v175, bullet_id, tick())
-                        v_u_131:Disconnect()
+                    vfx.Impact(instance, position, normal, material, lookVector, "Ranged", true)
+                    task.spawn(function() runhitmark(position) end)
+                    local newArmorPen, newPos, impactData = FunctionLibraryExtension.Penetration(FunctionLibraryExtension, instance, position, lookVector, armorpen)
+                    if not newArmorPen or not newPos then
+                        local hitCFrame = instance.CFrame:ToObjectSpace(CFrame.new(position))
+                        ProjectileInflict:FireServer(instance, hitCFrame, bullet_id, tick())
+                        conn:Disconnect()
                         return
                     end
-                    armorpen4 = arg1
-                    if armorpen4 > 0 then
-                        v_u_115 = arg2
-                        virtual_vfx.Impact(unpack(arg3))
+                    armorpen = newArmorPen
+                    if armorpen > 0 then
+                        cameraPos = newPos
+                        vfx.Impact(unpack(impactData))
                         penetrated = true
                         return
                     end
-                    v_u_131:Disconnect()
+                    conn:Disconnect()
                     return
                 end
-                v_u_131:Disconnect()
+                conn:Disconnect()
             end
-            v_u_131 = game:GetService("RunService").RenderStepped:Connect(v184)
+            conn = RunService.RenderStepped:Connect(updateRay)
         end
         local bullet_id = math.random(-100000, 100000)
-        if not v_u_74 then
-            task.spawn(function() v185(bullet_id) end)
+        if not pellets then
+            task.spawn(function() fireBullet(bullet_id) end)
             if multibullet then
                 for i = 1, multibullet_count - 1 do
-                    local extra_bullet_id = math.random(-100000, 100000)
-                    task.spawn(function() v185(extra_bullet_id) end)
+                    task.spawn(function() fireBullet(math.random(-100000, 100000)) end)
                 end
             end
         else
-            for _ = 1, v_u_74 do
-                task.spawn(function() v185(bullet_id) end)
+            for _ = 1, pellets do
+                task.spawn(function() fireBullet(bullet_id) end)
                 if multibullet then
                     for i = 1, multibullet_count - 1 do
-                        local extra_bullet_id = math.random(-100000, 100000)
-                        task.spawn(function() v185(extra_bullet_id) end)
+                        task.spawn(function() fireBullet(math.random(-100000, 100000)) end)
                     end
                 end
             end
@@ -4908,26 +5062,22 @@ aimmodfunc = function(prikol, p49, p50, p_u_51, aimpart, _, p52, p53, p54)
         if tracbool then
             task.spawn(function()
                 task.wait(0.05)
-                if tracerendpos ~= Vector3.zero then runtracer(v60.Position, tracerendpos) end
+                if tracerendpos ~= Vector3.zero then runtracer(itemRoot.Position, tracerendpos) end
             end)
         end
-        return v83, v82, v81, v79
+        return 0.001, 0.001, muzzleDevice, recoil
     end
-end
-
-for i = 10, 1000, 10 do
-    selftrack_data[i] = localplayer.Character and localplayer.Character.HumanoidRootPart and localplayer.Character.HumanoidRootPart.Position + Vector3.new(0, 1.3, 0) or Vector3.zero
 end
 
 function updateselfpos()
     for i = 1000, 20, -10 do
         selftrack_data[i] = selftrack_data[i - 10] or Vector3.zero
     end
-    selftrack_data[10] = localplayer.Character and localplayer.Character.HumanoidRootPart and localplayer.Character.HumanoidRootPart.Position + Vector3.new(0, 1.3, 0) or Vector3.zero
+    selftrack_data[10] = LocalPlayer.Character and LocalPlayer.Character.HumanoidRootPart and LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 1.3, 0) or Vector3.zero
 end
 
 function setupA1Table()
-    local mod = require(game.ReplicatedStorage.Modules.FPS)
+    local mod = require(ReplicatedStorage.Modules.FPS)
     local ogfunc = mod.updateClient
     mod.updateClient = function(a1, a2, a3)
         a1table = a1
@@ -4936,18 +5086,26 @@ function setupA1Table()
 end
 setupA1Table()
 
-runs.RenderStepped:Connect(function(delta)
-    if not localplayer.Character or not localplayer.Character:FindFirstChild("HumanoidRootPart") or not localplayer.Character:FindFirstChild("Humanoid") then
-        if is_ui_visible then
-            hideUI()
-        end
+function updateFOVCircleVisibility()
+    local visible = aimbool and fovcircle_enabled
+    aimfovcircle.Visible = visible
+    aimfovcircle_outer.Visible = visible
+    aimfovcircle_inner.Visible = visible
+    aimfovcircle_fill.Visible = visible and aimfovfill_enabled
+end
+
+RunService.RenderStepped:Connect(function(delta)
+    local char = LocalPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") or not char:FindFirstChild("Humanoid") then
+        if is_ui_visible then hideUI() end
+        updateFOVCircleVisibility()
         return
     end
-    local _, _, newglobalcurrentgun = getcurrentgun(localplayer)
+    local _, _, newglobalcurrentgun = getcurrentgun(LocalPlayer)
     globalcurrentgun = newglobalcurrentgun
     globalammo = getcurrentammo(globalcurrentgun)
     choosetarget()
-    local fov_position = aimmousefov and uis:GetMouseLocation() or Vector2.new(wcamera.ViewportSize.X / 2, wcamera.ViewportSize.Y / 2)
+    local fov_position = aimmousefov and UserInputService:GetMouseLocation() or Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
     aimfovcircle.Radius = aimfov
     aimfovcircle_outer.Radius = aimfov + 1
     aimfovcircle_inner.Radius = aimfov - 1
@@ -4956,16 +5114,9 @@ runs.RenderStepped:Connect(function(delta)
     aimfovcircle_outer.Position = fov_position
     aimfovcircle_inner.Position = fov_position
     aimfovcircle_fill.Position = fov_position
-    if not aimbool then
-        aimfovcircle.Visible = false
-        aimfovcircle_outer.Visible = false
-        aimfovcircle_inner.Visible = false
-        aimfovcircle_fill.Visible = false
-    end
-    if targetui_enabled and aimtarget then
-        if not is_ui_visible and not tweening then
-            showUI()
-        end
+    updateFOVCircleVisibility()
+    if targetui_enabled and aimbool and aimtarget then
+        if not is_ui_visible and not tweening then showUI() end
         if is_ui_visible then
             local humanoid, name
             if aimtarget:IsA("Player") then
@@ -4988,7 +5139,7 @@ runs.RenderStepped:Connect(function(delta)
                     local healthPercent = math.clamp(humanoid.Health / humanoid.MaxHealth, 0, 1)
                     if math.abs(health - last_health) > 0.1 then
                         last_health = health
-                        tweens:Create(G2L.p, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = UDim2.new(0, 190 * healthPercent, 0, 11)}):Play()
+                        TweenService:Create(G2L.p, TweenInfo.new(0.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {Size = UDim2.new(0, 190 * healthPercent, 0, 11)}):Play()
                     end
                 end
             else
@@ -5001,8 +5152,7 @@ runs.RenderStepped:Connect(function(delta)
                 local wipestats = replicatedPlayers[aimtarget.Name] and replicatedPlayers[aimtarget.Name].Status.Journey.WipeStatistics
                 local kills = wipestats and wipestats:GetAttribute("Kills") or 0
                 local deaths = wipestats and wipestats:GetAttribute("Deaths") or 0
-                local kdr = kills == 0 and "0.00" or string.format("%.2f", deaths == 0 and kills or kills / deaths)
-                G2L.o.Text = kdr
+                G2L.o.Text = kills == 0 and "0.00" or string.format("%.2f", deaths == 0 and kills or kills / deaths)
                 if aimtarget ~= last_target then
                     updateInventoryText(aimtarget)
                     last_target = aimtarget
@@ -5019,7 +5169,7 @@ runs.RenderStepped:Connect(function(delta)
     if aimtarget ~= last_aimtarget then
         last_aimtarget = aimtarget
     end
-    selftrack_update = delta
+    selftrack_update = selftrack_update + delta
     if selftrack_update >= 0.01 then
         updateselfpos()
         selftrack_update = 0
@@ -5027,9 +5177,9 @@ runs.RenderStepped:Connect(function(delta)
 end)
 
 if aimbool then
-    require(game.ReplicatedStorage.Modules.FPS.Bullet).CreateBullet = aimmodfunc
+    Bullet.CreateBullet = aimmodfunc
 else
-    require(game.ReplicatedStorage.Modules.FPS.Bullet).CreateBullet = aimogfunc
+    Bullet.CreateBullet = aimogfunc
 end
 
 Enabled:Toggle({
@@ -5040,17 +5190,26 @@ Enabled:Toggle({
         showToggleNotification("Silent Aim", value)
         playToggleSound(value)
         if aimbool then
-            require(game.ReplicatedStorage.Modules.FPS.Bullet).CreateBullet = aimmodfunc
+            Bullet.CreateBullet = aimmodfunc
+            updateFOVCircleVisibility()
+            if targetui_enabled and aimtarget and not is_ui_visible and not tweening then
+                showUI()
+            end
         else
-            require(game.ReplicatedStorage.Modules.FPS.Bullet).CreateBullet = aimogfunc
-            aimfovcircle.Visible = false
-            aimfovcircle_outer.Visible = false
-            aimfovcircle_inner.Visible = false
-            aimfovcircle_fill.Visible = false
-            fovcircle_enabled = false
+            Bullet.CreateBullet = aimogfunc
+            updateFOVCircleVisibility()
+            if is_ui_visible and not tweening then
+                hideUI()
+            end
+            if targetui_enabled then
+                targetui_enabled = false
+                showToggleNotification("Target UI", false, "Target UI disabled as Silent Aim is turned off")
+                playToggleSound(false)
+            end
         end
     end
 })
+
 Enabled:Toggle({
     Name = "Target UI",
     Flag = "TargetUI",
@@ -5059,19 +5218,20 @@ Enabled:Toggle({
             showToggleNotification("Target UI", false, "Silent Aim must be enabled to use Target UI")
             playToggleSound(false)
             targetui_enabled = false
-            if is_ui_visible then
-                hideUI()
-            end
         else
             targetui_enabled = value
             showToggleNotification("Target UI", value)
             playToggleSound(value)
-            if not value and is_ui_visible then
+            if value and aimbool and aimtarget and not is_ui_visible and not tweening then
+                showUI()
+            elseif not value and is_ui_visible and not tweening then
                 hideUI()
             end
         end
     end
 })
+
+
 
 Enabled:Toggle({
     Name = "Wall Check",
@@ -5130,25 +5290,16 @@ Fov = Pages["Aiming"]:Section({
 })
 
 Fov:Toggle({
-    Name = "Fov Circle",
+    Name = "Fov ",
     Flag = "FOVCircle",
     Callback = function(value)
         fovcircle_enabled = value
         showToggleNotification("FOV Circle", value)
-        playToggleSound(value)     
-        if aimbool and value then
-            aimfovcircle.Visible = true
-            aimfovcircle_outer.Visible = true
-            aimfovcircle_inner.Visible = true
-            aimfovcircle_fill.Visible = aimfovfill_enabled
-        else
-            aimfovcircle.Visible = false
-            aimfovcircle_outer.Visible = false
-            aimfovcircle_inner.Visible = false
-            aimfovcircle_fill.Visible = false
-        end
+        playToggleSound(value)
+        updateFOVCircleVisibility()
     end
 })
+
 
 Fov:Toggle({
     Name = "Fov Fill",
@@ -5218,132 +5369,179 @@ Fov:Slider({
     end
 })
 
-ModDetection = Pages["Aiming"]:Section({
-    Name = "Mod Detection", 
-    Zindex = 2, 
-    Side = "Right"
-})
-local mod_list = {}
-local mod_triggered = false
-mod_detection_enabled = false
-mod_action_type = "Notify"
-
-local function check_mods()
-    if mod_detection_enabled then
-        for _, player in pairs(game.Players:GetPlayers()) do
-            if mod_list[player.Name] ~= nil then continue end
-
-            local pinfo = game.ReplicatedStorage.Players:FindFirstChild(player.Name)
-            if not pinfo then continue end
-            local status = pinfo:FindFirstChild("Status")
-            if not status then continue end
-            if not status:FindFirstChild("UAC") then continue end
-            if not status:FindFirstChild("GameplayVariables") then continue end
-
-            local function process_mod(plrname, reason)
-                mod_list[plrname] = true
-                if mod_triggered then return end
-                mod_triggered = true
-
-                if mod_action_type == "Notify" then
-                    Notifications:Notification("Mod Detected", 5, Library.Accent, false)
-                elseif mod_action_type == "Kick" then
-                    game.Players.LocalPlayer:Kick("Mod Detected")
-                end
-            end
-
-            if status.UAC:GetAttribute("Enabled") == true then
-                process_mod(player.Name, "uac enabled")
-                continue
-            elseif status.GameplayVariables:GetAttribute("Godmode") == true then
-                process_mod(player.Name, "godmode enabled")
-                continue
-            elseif status.GameplayVariables:GetAttribute("PremiumLevel") >= 4 then
-                process_mod(player.Name, "premium level >= 4")
-                continue
-            elseif status.UAC:GetAttribute("A1Detected") == true then
-                process_mod(player.Name, "A1Detected")
-                continue
-            elseif status.UAC:GetAttribute("A2Detected") == true then
-                process_mod(player.Name, "A2Detected")
-                continue
-            elseif status.UAC:GetAttribute("A3Detected") == true then
-                process_mod(player.Name, "A3Detected")
-                continue
-            end
-        end
-    end
-end
-
-ModDetection:Toggle({
-    Name = "Mod Notify",
-    Flag = "ModNotify",
+Fov:Slider({
+    Name = "Fov Sides",
+    Suffix = "sides",
+    Min = 6,
+    Max = 60,
+    Default = 32,
+    Flag = "FovCircleSides",
     Callback = function(value)
-        mod_detection_enabled = value
-        if not value then
-            mod_triggered = false
-            table.clear(mod_list)
-        end
-        showToggleNotification("Mod Notify", value)
-        playToggleSound(value)
+        aimfovcircle_numsides = value
+        aimfovcircle.NumSides = value
+        aimfovcircle_outer.NumSides = value
+        aimfovcircle_inner.NumSides = value
+        aimfovcircle_fill.NumSides = value
     end
 })
 
-ModDetection:List({
-    Name = "Mod Action",
-    Flag = "ModAction",
-    Options = {"Notify", "Kick"},
-    Default = "Notify",
-    Callback = function(value)
-        mod_action_type = value
-    end
-})
 resolver = Pages["Aiming"]:Section({
     Name = "UnderGround Resolver/Upangle Resolver", 
     Zindex = 1, 
     Side = "Right"
 })
+local player = game.Players.LocalPlayer
+local runService = game:GetService("RunService")
+local inputService = game:GetService("UserInputService")
+local isResolving = false
+local resolveTimer = tick()
+local playerPosition = player.Character and player.Character.HumanoidRootPart and player.Character.HumanoidRootPart.CFrame or CFrame.new()
+local resolveTimeout = 0.7
+local manipulateModels = true
+local hiddenPlayers = {}
+local resolverEnabled = false
+local resolverHeight = -15
 
-resolver_timeout = 3
-resolver_active = false
-resolver_position = nil
-resolver_hyper_height = false
-resolver_cooldown = 0
+local hideAnimation = Instance.new("Animation")
+hideAnimation.AnimationId = "rbxassetid://15609995579"
+local hideAnimationTrack = nil
+local desyncTable = {}
 
+local function enableBypass()
+    local metaTable = getrawmetatable(game)
+    local originalNamecall = metaTable.__namecall
+    setreadonly(metaTable, false)
+    metaTable.__namecall = newcclosure(function(self, ...)
+        local method = getnamecallmethod()
+        local args = {...}
+        if method == "FireServer" and self.Name == "ProjectileInflict" then
+            if args[1] == game.Players.LocalPlayer.Character.PrimaryPart then
+                return coroutine.yield()
+            end
+        end
+        return originalNamecall(self, ...)
+    end)
+    setreadonly(metaTable, true)
+end
+enableBypass()
 
-local runs = game:GetService("RunService")
-local localplayer = game.Players.LocalPlayer
+local function loadAnimations(character)
+    if character and character:FindFirstChildOfClass("Humanoid") then
+        local humanoid = character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            hideAnimationTrack = humanoid.Animator:LoadAnimation(hideAnimation)
+            hideAnimationTrack.Priority = Enum.AnimationPriority.Action
+        end
+    end
+end
+
+player.CharacterAdded:Connect(function(character)
+    loadAnimations(character)
+end)
+
+if player.Character then
+    loadAnimations(player.Character)
+end
+
+inputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.P then
+        if resolverEnabled and tick() > resolveTimer then
+            resolveTimer = tick() 
+            if desyncTable[1] then
+                player.Character.HumanoidRootPart.CFrame = desyncTable[1]
+            end
+            playerPosition = player.Character.HumanoidRootPart.CFrame
+            isResolving = true
+            task.wait(0.15)
+            isResolving = false
+            player.Character.HumanoidRootPart.Anchored = false
+            player.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
+        end
+    end
+end)
+
+local function updateHiddenPlayers()
+    for i = #hiddenPlayers, 1, -1 do
+        local character = hiddenPlayers[i]
+        if not character or not character.Parent or not character:FindFirstChildOfClass("Humanoid") or character:FindFirstChildOfClass("Humanoid").Health <= 0 then
+            table.remove(hiddenPlayers, i)
+        end
+    end
+
+    for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+        if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChildOfClass("Humanoid") then
+            local humanoid = otherPlayer.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid.Health > 0 then
+                for _, track in ipairs(humanoid.Animator:GetPlayingAnimationTracks()) do
+                    if track.Animation and track.Animation.AnimationId == hideAnimation.AnimationId then
+                        if not table.find(hiddenPlayers, otherPlayer.Character) then
+                            table.insert(hiddenPlayers, otherPlayer.Character)
+                        end
+                        break
+                    end
+                end
+            end
+        end
+    end
+end
+
+task.spawn(function()
+    while task.wait(0.2) do
+        updateHiddenPlayers()
+    end
+end)
+
+runService.RenderStepped:Connect(function(delta)
+    if manipulateModels then
+        for _, character in ipairs(hiddenPlayers) do
+            if character and character:FindFirstChildOfClass("Humanoid") then
+                local humanoid = character:FindFirstChildOfClass("Humanoid")
+                if humanoid.Health > 0 then
+                    for _, track in ipairs(humanoid.Animator:GetPlayingAnimationTracks()) do
+                        if track.Animation and track.Animation.AnimationId == hideAnimation.AnimationId then
+                            track:Stop()
+                            break
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+runService.Heartbeat:Connect(function(dt)
+    if isResolving and resolverEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local character = player.Character
+        local rootPart = character.HumanoidRootPart
+        local offset = CFrame.new(0, resolverHeight, 0)
+        rootPart.AssemblyLinearVelocity = -offset.Position
+        character.HumanoidRootPart.CanCollide = false
+        if character:FindFirstChild("UpperTorso") then character.UpperTorso.CanCollide = false end
+        if character:FindFirstChild("LowerTorso") then character.LowerTorso.CanCollide = false end
+        character:PivotTo(playerPosition * offset)
+    end
+end)
 
 resolver:Toggle({
     Name = "Resolver",
     Flag = "Resolver",
     Callback = function(value)
-        showToggleNotification("FOV Circle", value)
+        resolverEnabled = value
+        showToggleNotification("Resolver", value)
         playToggleSound(value)
-        if tick() > resolver_cooldown then
-            resolver_cooldown = tick() + 0.5 + resolver_timeout
-            if desync_enabled then
-                localplayer.Character.HumanoidRootPart.CFrame = desync_table[1]
-            end
-            resolver_position = localplayer.Character.HumanoidRootPart.CFrame
-            resolver_active = true
-            task.wait(0.5)
-            resolver_active = false
-            localplayer.Character.HumanoidRootPart.Anchored = false
-            localplayer.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
-        end
     end
 })
 
 resolver:Slider({
-    Name = "Resolver Time",
-    Suffix = "sec",
-    Min = 0,
-    Max = 10,
-    Default = 3,
-    Flag = "ResolverTime",
+    Name = "Resolver Height",
+    Suffix = "studs",
+    Min = -20,
+    Max = -10,
+    Default = -15,
+    Flag = "ResolverHeight",
     Callback = function(value)
-        resolver_timeout = value
+        resolverHeight = value
     end
 })
 
@@ -5352,37 +5550,20 @@ resolver:Keybind({
     Flag = "ResolverKeybind",
     Default = Enum.KeyCode.End,
     Callback = function()
-        if tick() > resolver_cooldown then
-            resolver_cooldown = tick() + 0.5 + resolver_timeout
-            if desync_enabled then
-                localplayer.Character.HumanoidRootPart.CFrame = desync_table[1]
+        if resolverEnabled and tick() > resolveTimer then
+            resolveTimer = tick() + 0.5 + resolveTimeout
+            if desyncTable[1] then
+                player.Character.HumanoidRootPart.CFrame = desyncTable[1]
             end
-            resolver_position = localplayer.Character.HumanoidRootPart.CFrame
-            resolver_active = true
+            playerPosition = player.Character.HumanoidRootPart.CFrame
+            isResolving = true
             task.wait(0.5)
-            resolver_active = false
-            localplayer.Character.HumanoidRootPart.Anchored = false
-            localplayer.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
+            isResolving = false
+            player.Character.HumanoidRootPart.Anchored = false
+            player.Character.HumanoidRootPart.AssemblyLinearVelocity = Vector3.zero
         end
     end
 })
-
-runs.Heartbeat:Connect(function(dt)
-    if resolver_active and localplayer.Character and localplayer.Character.HumanoidRootPart then
-        local char = localplayer.Character
-        local hrp = char.HumanoidRootPart
-        local offset = CFrame.new(0, -15, 0)
-        if resolver_hyper_height then offset = CFrame.new(0, 500, 0) end
-        hrp.AssemblyLinearVelocity = -offset.Position
-        char.HumanoidRootPart.CanCollide = false
-        char.UpperTorso.CanCollide = false
-        char.LowerTorso.CanCollide = false
-        char:PivotTo(resolver_position * offset)
-    end
-end)
-
-
-
 
 local GunMods = Pages["Aiming"]:Section({
     Name = "Gun modules", 
@@ -5988,35 +6169,6 @@ local LeftLeg
 local RightLeg
 local Head
 
-local function CreatePart(name, size, position)
-	local part = Instance.new("Part")
-	part.Name = name
-	part.Size = size
-	part.Position = position
-	part.Anchored = true
-	part.CanCollide = false
-	part.Transparency = 1
-	part.BrickColor = BrickColor.new("Institutional white")
-	part.Material = Enum.Material.ForceField
-	part.Parent = RigModel
-	part.CastShadow = false
-	return part
-end
-
-local function CreateRigModel()
-	RigModel = Instance.new("Model")
-	RigModel.Name = "RigR6Model"
-	RigModel.Parent = workspace
-	Torso = CreatePart("Torso", Vector3.new(2, 2, 1), Vector3.new(0, 15, 0))
-	LeftArm = CreatePart("LeftArm", Vector3.new(1, 2, 1), Vector3.new(-1.5, 15, 0))
-	RightArm = CreatePart("RightArm", Vector3.new(1, 2, 1), Vector3.new(1.5, 15, 0))
-	LeftLeg = CreatePart("LeftLeg", Vector3.new(1, 2, 1), Vector3.new(-0.5, 13, 0))
-	RightLeg = CreatePart("RightLeg", Vector3.new(1, 2, 1), Vector3.new(0.5, 13, 0))
-	Head = CreatePart("Head", Vector3.new(1, 2, 1), Vector3.new(0, 16, 0))
-end
-
-CreateRigModel()
-
 local IsDesyncEnabled = false
 local IsVisualizeEnabled = false
 local IsDesyncActive = false
@@ -6033,6 +6185,49 @@ local animationParams = {
 	timePos = 2.35,
 	speed = 0
 }
+
+local function ApplyColor(color)
+	for _, part in pairs({Torso, LeftArm, RightArm, LeftLeg, RightLeg, Head}) do
+		if part then
+			part.BrickColor = BrickColor.new(color)
+		end
+	end
+end
+
+local function CreatePart(name, size, position)
+	local part = Instance.new("Part")
+	part.Name = name
+	part.Size = size
+	part.Position = position
+	part.Anchored = true
+	part.CanCollide = false
+	part.CanTouch = false
+	part.CanQuery = false
+	part.Transparency = 1
+	part.BrickColor = BrickColor.new(FillColor)
+	part.Material = Enum.Material.ForceField
+	part.Parent = RigModel
+	part.CastShadow = false
+	return part
+end
+
+local function CreateRigModel()
+	if RigModel and RigModel.Parent then
+		RigModel:Destroy()
+	end
+	RigModel = Instance.new("Model")
+	RigModel.Name = "RigR6Model"
+	RigModel.Parent = workspace
+	Torso = CreatePart("Torso", Vector3.new(2, 2, 1), Vector3.new(0, 14, 1))
+	LeftArm = CreatePart("LeftArm", Vector3.new(1, 2, 1), Vector3.new(-1.5, 14, 1))
+	RightArm = CreatePart("RightArm", Vector3.new(1, 2, 1), Vector3.new(1.5, 14, 1))
+	LeftLeg = CreatePart("LeftLeg", Vector3.new(1, 2, 1), Vector3.new(-0.5, 12, 1))
+	RightLeg = CreatePart("RightLeg", Vector3.new(1, 2, 1), Vector3.new(0.5, 12, 1))
+	Head = CreatePart("Head", Vector3.new(1, 2, 1), Vector3.new(0, 15, 1))
+	ApplyColor(FillColor)
+end
+
+CreateRigModel()
 
 local function handleAnimation()
 	local shouldPlay = IsDesyncEnabled and IsDesyncActive and Humanoid.Health > 0
@@ -6067,9 +6262,14 @@ local function UpdateRig(desyncCFrame)
 	LeftLeg.CFrame = torsoCFrame * CFrame.new(-0.5, -2, 0)
 	RightLeg.CFrame = torsoCFrame * CFrame.new(0.5, -2, 0)
 	Head.CFrame = torsoCFrame * CFrame.new(0, 1, 0)
-	local transparency = IsVisualizeEnabled and FillTransparency or 1
+end
+
+local function UpdateTransparency()
+	local transparency = IsVisualizeEnabled and IsDesyncEnabled and (FillTransparency / 100) or 1
 	for _, part in pairs({Torso, LeftArm, RightArm, LeftLeg, RightLeg, Head}) do
-		part.Transparency = transparency
+		if part then
+			part.Transparency = transparency
+		end
 	end
 end
 
@@ -6103,23 +6303,15 @@ local function ApplyDesync()
 end
 
 local function ApplyTransparency(newTransparency)
-	local tweenInfo = TweenInfo.new(0.5, Enum.EasingStyle.Linear)
-	for _, part in pairs({Torso, LeftArm, RightArm, LeftLeg, RightLeg, Head}) do
-		TweenService:Create(part, tweenInfo, {Transparency = IsDesyncEnabled and newTransparency or 1}):Play()
-	end
-end
-
-local function ApplyColor(color)
-	for _, part in pairs({Torso, LeftArm, RightArm, LeftLeg, RightLeg, Head}) do
-		part.BrickColor = BrickColor.new(color)
-	end
+	FillTransparency = newTransparency
+	UpdateTransparency()
 end
 
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
 	Character = newCharacter
 	HumanoidRootPart = newCharacter:WaitForChild("HumanoidRootPart")
 	Humanoid = newCharacter:WaitForChild("Humanoid")
-	Animator = Humanoid:WaitForChild("Animator")
+	Animator = newCharacter:WaitForChild("Animator")
 	handleAnimation()
 end)
 
@@ -6152,16 +6344,9 @@ underground:Toggle({
 	Callback = function(value)
 		IsDesyncEnabled = value
 		showToggleNotification("UnderGround Anti-Aim", value)
-		playToggleSound(value)	    
-		handleAnimation()
-		if IsDesyncEnabled and Humanoid.Health > 0 then
-			if not RigModel.Parent then
-				CreateRigModel()
-			end
-			if not DesyncConnection and IsDesyncActive then
-				DesyncConnection = RunService.Heartbeat:Connect(ApplyDesync)
-			end
-		else
+		playToggleSound(value)
+		if not value then
+			IsDesyncActive = false
 			if RigModel then
 				RigModel:Destroy()
 			end
@@ -6169,8 +6354,17 @@ underground:Toggle({
 				DesyncConnection:Disconnect()
 				DesyncConnection = nil
 			end
-			IsDesyncActive = false
 			UpdateRig(nil)
+			handleAnimation()
+		else
+			if IsDesyncActive and not DesyncConnection and Humanoid.Health > 0 then
+				if not RigModel.Parent then
+					CreateRigModel()
+				end
+				DesyncConnection = RunService.Heartbeat:Connect(ApplyDesync)
+				handleAnimation()
+			end
+			UpdateTransparency()
 		end
 	end
 }):Keybind({
@@ -6198,6 +6392,7 @@ underground:Toggle({
 				end
 				UpdateRig(nil)
 			end
+			UpdateTransparency()
 		end
 	end
 })
@@ -6208,7 +6403,8 @@ underground:Toggle({
 	Callback = function(value)
 		IsVisualizeEnabled = value
 		showToggleNotification("Visualize Desync", value)
-		playToggleSound(value)	    
+		playToggleSound(value)
+		UpdateTransparency()
 		if IsDesyncEnabled then
 			UpdateRig(nil)
 		end
@@ -6225,14 +6421,13 @@ underground:Colorpicker({
 })
 underground:Slider({
 	Name = "Fill Transparency",
-	Suffix = "",
+	Suffix = "%",
 	Min = 0,
-	Max = 1,
+	Max = 100,
 	Default = 0,
-	Increment = 0.1,
+	Increment = 1,
 	Flag = "FillTransparencydesync",
 	Callback = function(value)
-		FillTransparency = value
 		ApplyTransparency(value)
 	end
 })
@@ -6255,7 +6450,6 @@ Upangle:Toggle({
 	end
 })
 
-
 Upangle:Slider({
 	Name = "Angle Count",
 	Suffix = "%",
@@ -6269,6 +6463,7 @@ Upangle:Slider({
 		end
 	end
 })
+
 Upangle:List({
     Name = "Upangle Variables",
     Flag = "Upanglevar",
@@ -6278,9 +6473,11 @@ Upangle:List({
         upangleSettings.mode = value
     end
 })
+
 local mt = getrawmetatable(game)
 local oldNamecall = mt.__namecall
 setreadonly(mt, false)
+
 mt.__namecall = newcclosure(function(self, ...)
     local Method = getnamecallmethod()
     local Args = {...}
@@ -6296,6 +6493,28 @@ mt.__namecall = newcclosure(function(self, ...)
     end
     return oldNamecall(self, ...)
 end)
+
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    local mt = getrawmetatable(game)
+    setreadonly(mt, false)
+    mt.__namecall = newcclosure(function(self, ...)
+        local Method = getnamecallmethod()
+        local Args = {...}
+        if Method == "FireServer" and self.Name == "UpdateTilt" then
+            if upangleSettings and upangleSettings.tiltEnabled then
+                if upangleSettings.mode == "Jitter" then
+                    Args[1] = (math.random(-100, 100) / 100)
+                else
+                    Args[1] = upangleSettings.tiltValue
+                end
+                return oldNamecall(self, table.unpack(Args))
+            end
+        end
+        return oldNamecall(self, ...)
+    end)
+    setreadonly(mt, true)
+end)
+
 setreadonly(mt, true)
 		end
 	end
@@ -6305,11 +6524,9 @@ do
 		do
 local PlayerESP, BotESP = Pages["Renders"]:MultiSection({Sections = {"Player ESP", "Bot Esp"}, Side = "Left", Zindex = 7})
 
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Camera = workspace.CurrentCamera
-
 
 local E = {
     On = false,
@@ -6322,7 +6539,6 @@ local E = {
     Color = Color3.fromRGB(115, 100, 215),
     HPos = "Left",
 }
-
 
 local BE = {
     On = false,
@@ -6337,14 +6553,12 @@ local BE = {
 local T = {} 
 local BT = {} 
 
-
 local function isInFOV(position, maxAngle)
     local camPos = Camera.CFrame.Position
     local toEntity = (position - camPos).Unit
     local camForward = Camera.CFrame.LookVector
     return math.deg(math.acos(toEntity:Dot(camForward))) <= (maxAngle or 70)
 end
-
 
 local function getActiveWeapon(model)
     if not model then return "None" end
@@ -6353,7 +6567,6 @@ local function getActiveWeapon(model)
     end
     return "None"
 end
-
 
 local function detectBots()
     local bots = {}
@@ -6366,7 +6579,6 @@ local function detectBots()
     end
     return bots
 end
-
 
 local function CR()
     local r = Drawing.new("Square")
@@ -6393,7 +6605,6 @@ local function CR()
     return r, o, i
 end
 
-
 local function BCR()
     local r = Drawing.new("Square")
     r.Visible = false
@@ -6418,7 +6629,6 @@ local function BCR()
 
     return r, o, i
 end
-
 
 local function CH(p)
     local e = {}
@@ -6466,7 +6676,6 @@ local function CH(p)
     e.SO.ZIndex = 3
 end
 
-
 local function BCH(b)
     local e = {}
     BT[b] = e
@@ -6495,7 +6704,6 @@ local function BCH(b)
     e.SO.ZIndex = 3
 end
 
-
 local function RH(p)
     local e = T[p]
     if not e then return end
@@ -6508,7 +6716,6 @@ local function RH(p)
     T[p] = nil
 end
 
-
 local function BRH(b)
     local e = BT[b]
     if not e then return end
@@ -6518,7 +6725,6 @@ local function BRH(b)
     if e.SO then e.SO:Remove() end
     BT[b] = nil
 end
-
 
 local function UR(r, o, i, p, lp)
     if p == lp then return end
@@ -6619,7 +6825,6 @@ local function UR(r, o, i, p, lp)
     end
 end
 
-
 local function BUR(r, o, i, b)
     local humanoid = b:FindFirstChild("Humanoid")
     local rp = b:FindFirstChild("HumanoidRootPart")
@@ -6702,7 +6907,6 @@ local function BUR(r, o, i, b)
     end
 end
 
-
 local function PA(p, lp)
     local r, o, i = CR()
     CH(p)
@@ -6710,7 +6914,6 @@ local function PA(p, lp)
         UR(r, o, i, p, lp)
     end)
 end
-
 
 local function BPA(b)
     local r, o, i = BCR()
@@ -6720,11 +6923,9 @@ local function BPA(b)
     end)
 end
 
-
 local function PR(p)
     RH(p)
 end
-
 
 local function BPR(b)
     BRH(b)
@@ -6753,18 +6954,23 @@ for _, p in ipairs(Players:GetPlayers()) do
     end
 end
 
-local function initBotESP()
-    for _, b in ipairs(detectBots()) do
-        if b:FindFirstChild("Humanoid") and b.Humanoid.Health > 0 then
-            BPA(b)
+local function registerBot(bot)
+    if bot:IsA("Model") and bot:FindFirstChild("Humanoid") and bot:FindFirstChild("HumanoidRootPart") and bot.Humanoid.Health > 0 then
+        if not BT[bot] then
+            BPA(bot)
         end
     end
 end
 
-workspace.AiZones.DescendantAdded:Connect(function(descendant)
-    if descendant:IsA("Model") and descendant:FindFirstChild("Humanoid") and descendant.Humanoid.Health > 0 then
-        BPA(descendant)
+local function initBotESP()
+    for _, b in ipairs(detectBots()) do
+        registerBot(b)
     end
+end
+
+workspace.AiZones.DescendantAdded:Connect(function(descendant)
+    task.wait(0.1)
+    registerBot(descendant)
 end)
 
 workspace.AiZones.DescendantRemoving:Connect(function(descendant)
@@ -6773,8 +6979,18 @@ workspace.AiZones.DescendantRemoving:Connect(function(descendant)
     end
 end)
 
-initBotESP()
+local lastCheck = 0
+RunService.Heartbeat:Connect(function(deltaTime)
+    lastCheck = lastCheck + deltaTime
+    if lastCheck >= 1 and BE.On then
+        for _, b in ipairs(detectBots()) do
+            registerBot(b)
+        end
+        lastCheck = 0
+    end
+end)
 
+initBotESP()
 
 local function TE(v)
     E.On = v
@@ -6789,7 +7005,6 @@ local function TE(v)
     end
 end
 
-
 local function BTE(v)
     BE.On = v
     if not v then
@@ -6801,24 +7016,20 @@ local function BTE(v)
     end
 end
 
-
 local function TB(v)
     E.Box = v
 end
-
 
 local function BTB(v)
     BE.Box = v
 end
 
-
 local function TN(v)
     E.Name = v
-    for _ , e in pairs(T) do
+    for _, e in pairs(T) do
         e.N.Visible = v and E.On
     end
 end
-
 
 local function BTN(v)
     BE.Name = v
@@ -6827,14 +7038,12 @@ local function BTN(v)
     end
 end
 
-
 local function TW(v)
     E.Weapon = v
     for _, e in pairs(T) do
         e.W.Visible = v and E.On
     end
 end
-
 
 local function THB(v)
     E.HBar = v
@@ -6844,7 +7053,6 @@ local function THB(v)
     end
 end
 
-
 local function BTHB(v)
     BE.HBar = v
     for _, e in pairs(BT) do
@@ -6853,7 +7061,6 @@ local function BTHB(v)
     end
 end
 
-
 local function THT(v)
     E.HText = v
     for _, e in pairs(T) do
@@ -6861,16 +7068,13 @@ local function THT(v)
     end
 end
 
-
 local function SHP(v)
     E.HPos = v
 end
 
-
 local function BSHP(v)
     BE.HPos = v
 end
-
 
 local function UpdateColors(color)
     E.Color = color
@@ -6881,7 +7085,6 @@ local function UpdateColors(color)
     end
 end
 
-
 local function BUpdateColors(color)
     BE.Color = color
     for _, e in pairs(BT) do
@@ -6889,7 +7092,6 @@ local function BUpdateColors(color)
         e.S.Color = color
     end
 end
-
 
 PlayerESP:Toggle({
     Name = "Turn Esp", 
@@ -6968,7 +7170,6 @@ PlayerESP:Colorpicker({
     Callback = UpdateColors
 })
 
-
 BotESP:Toggle({
     Name = "Turn Esp", 
     Flag = "Bot Main Enabled", 
@@ -7024,7 +7225,7 @@ BotESP:Colorpicker({
     Default = BE.Color, 
     Callback = BUpdateColors
 })
-local Chams, BotChams = Pages["Renders"]:MultiSection({Sections = {"Player Chams", "Bot Chams"}, Side = "Right", Zindex = 7})
+local Chams = Pages["Renders"]:Section({Name = "Chams", Zindex = 6, Side = "Right"})
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
@@ -7037,18 +7238,8 @@ local fillTransparency = 0.5
 local outlineColor = Color3.fromRGB(0, 255, 0)
 local fillColor = Color3.fromRGB(0, 255, 0)
 
-local enabledBotChams = false
-local botMaxDistance = 2000
-local botFillTransparency = 0.5
-local botOutlineColor = Color3.fromRGB(255, 0, 0)
-local botFillColor = Color3.fromRGB(255, 0, 0)
-
-
 local playerHighlights = {}
-local botHighlights = {}
 local playerStates = {}
-local botStates = {}
-
 
 local function isInFOV(position, maxAngle)
     local camera = Workspace.CurrentCamera
@@ -7056,7 +7247,7 @@ local function isInFOV(position, maxAngle)
     local toEntity = (position - camPos).Unit
     local camForward = camera.CFrame.LookVector
     local angle = math.deg(math.acos(toEntity:Dot(camForward)))
-    return angle <= (maxAngle or 70) 
+    return angle <= (maxAngle or 70)
 end
 
 local function createHighlight(character)
@@ -7066,16 +7257,6 @@ local function createHighlight(character)
     highlight.FillColor = fillColor
     highlight.OutlineColor = outlineColor
     highlight.Parent = character
-    return highlight
-end
-
-local function createBotHighlight(bot)
-    local highlight = Instance.new("Highlight")
-    highlight.OutlineTransparency = 0
-    highlight.FillTransparency = botFillTransparency
-    highlight.FillColor = botFillColor
-    highlight.OutlineColor = botOutlineColor
-    highlight.Parent = bot
     return highlight
 end
 
@@ -7089,16 +7270,6 @@ local function removeHighlights()
     end
 end
 
-local function removeBotHighlights()
-    for bot, highlight in pairs(botHighlights) do
-        if highlight then
-            highlight:Destroy()
-        end
-        botHighlights[bot] = nil
-        botStates[bot] = nil
-    end
-end
-
 local function updateAllHighlights()
     if not enabledChams then return end
     
@@ -7107,18 +7278,6 @@ local function updateAllHighlights()
             highlight.FillTransparency = fillTransparency
             highlight.OutlineColor = outlineColor
             highlight.FillColor = fillColor
-        end
-    end
-end
-
-local function updateAllBotHighlights()
-    if not enabledBotChams then return end
-    
-    for bot, highlight in pairs(botHighlights) do
-        if highlight and bot.Parent then
-            highlight.FillTransparency = botFillTransparency
-            highlight.OutlineColor = botOutlineColor
-            highlight.FillColor = botFillColor
         end
     end
 end
@@ -7159,15 +7318,12 @@ local function updateHighlights()
             continue
         end
 
-        
         local position = root.Position
         local distance = (position - localPos).Magnitude
         if state.lastPosition and (position - state.lastPosition).Magnitude < 0.5 and currentTime - state.lastUpdate < 0.1 then
-            
             continue
         end
 
-        
         if distance > 1000 and currentTime - state.lastUpdate < 0.5 then
             continue
         end
@@ -7175,14 +7331,12 @@ local function updateHighlights()
         local inFOV = isInFOV(position)
         local inRange = distance <= maxDistance
 
-        
         state.distance = distance
         state.inFOV = inFOV
         state.lastUpdate = currentTime
         state.lastPosition = position
         playerStates[player] = state
 
-        
         if not inRange or not inFOV then
             if highlight then
                 highlight:Destroy()
@@ -7191,82 +7345,8 @@ local function updateHighlights()
             continue
         end
 
-        
         if not highlight then
             playerHighlights[player] = createHighlight(character)
-        end
-    end
-end
-
-local function updateBotHighlights()
-    if not enabledBotChams or not localPlayer or not localPlayer.Character then
-        removeBotHighlights()
-        return
-    end
-
-    local camera = Workspace.CurrentCamera
-    local localPos = localPlayer.Character:GetPivot().Position
-    local currentTime = tick()
-
-    for _, botfold in pairs(Workspace.AiZones:GetChildren()) do
-        for _, bot in pairs(botfold:GetChildren()) do
-            if not bot:IsA("Model") or not bot:FindFirstChild("Humanoid") or bot.Humanoid.Health <= 0 then
-                if botHighlights[bot] then
-                    botHighlights[bot]:Destroy()
-                    botHighlights[bot] = nil
-                    botStates[bot] = nil
-                end
-                continue
-            end
-
-            local root = bot:FindFirstChild("HumanoidRootPart")
-            local state = botStates[bot] or { lastUpdate = 0, lastPosition = Vector3.new() }
-            local highlight = botHighlights[bot]
-
-            if not root then
-                if highlight then
-                    highlight:Destroy()
-                    botHighlights[bot] = nil
-                    botStates[bot] = nil
-                end
-                continue
-            end
-
-            
-            local position = root.Position
-            local distance = (position - localPos).Magnitude
-            if state.lastPosition and (position - state.lastPosition).Magnitude < 0.5 and currentTime - state.lastUpdate < 0.1 then
-                continue
-            end
-
-            
-            if distance > 1000 and currentTime - state.lastUpdate < 0.5 then
-                continue
-            end
-
-            local inFOV = isInFOV(position)
-            local inRange = distance <= botMaxDistance
-
-            
-            state.distance = distance
-            state.inFOV = inFOV
-            state.lastUpdate = currentTime
-            state.lastPosition = position
-            botStates[bot] = state
-
-            
-            if not inRange or not inFOV then
-                if highlight then
-                    highlight:Destroy()
-                    botHighlights[bot] = nil
-                end
-                continue
-            end
-
-            
-            if not highlight then
-                botHighlights[bot] = createBotHighlight(bot)
-            end
         end
     end
 end
@@ -7275,13 +7355,6 @@ local function UpdateFillTransparency(value)
     fillTransparency = 1 - (value / 100)
     if enabledChams then
         updateAllHighlights()
-    end
-end
-
-local function UpdateBotFillTransparency(value)
-    botFillTransparency = 1 - (value / 100)
-    if enabledBotChams then
-        updateAllBotHighlights()
     end
 end
 
@@ -7299,25 +7372,11 @@ local function setFillColor(color)
     end
 end
 
-local function setBotOutlineColor(color)
-    botOutlineColor = color
-    if enabledBotChams then
-        updateAllBotHighlights()
-    end
-end
-
-local function setBotFillColor(color)
-    botFillColor = color
-    if enabledBotChams then
-        updateAllBotHighlights()
-    end
-end
-
 local function onPlayerAdded(player)
     if player == localPlayer then return end
     player.CharacterAdded:Connect(function(character)
         if not enabledChams then return end
-        task.wait(0.5) 
+        task.wait(0.5)
         local root = character:FindFirstChild("HumanoidRootPart")
         local hum = character:FindFirstChild("Humanoid")
         if root and hum and hum.Health > 0 and (root.Position - localPlayer.Character:GetPivot().Position).Magnitude <= maxDistance and isInFOV(root.Position) then
@@ -7337,52 +7396,17 @@ local function onPlayerRemoving(player)
     end
 end
 
-local function onBotAdded(bot)
-    if not bot:IsA("Model") or not bot:FindFirstChild("Humanoid") or not enabledBotChams then return end
-    task.wait(0.5)
-    local root = bot:FindFirstChild("HumanoidRootPart")
-    local hum = bot:FindFirstChild("Humanoid")
-    if root and hum and hum.Health > 0 and (root.Position - localPlayer.Character:GetPivot().Position).Magnitude <= botMaxDistance and isInFOV(root.Position) then
-        if not botHighlights[bot] then
-            botHighlights[bot] = createBotHighlight(bot)
-            botStates[bot] = { lastUpdate = tick(), lastPosition = root.Position }
-        end
-    end
-end
-
-local function onBotRemoving(bot)
-    if botHighlights[bot] then
-        botHighlights[bot]:Destroy()
-        botHighlights[bot] = nil
-        botStates[bot] = nil
-    end
-end
-
 for _, player in pairs(Players:GetPlayers()) do
     onPlayerAdded(player)
 end
 Players.PlayerAdded:Connect(onPlayerAdded)
 Players.PlayerRemoving:Connect(onPlayerRemoving)
 
-for _, botfold in pairs(Workspace.AiZones:GetChildren()) do
-    botfold.ChildAdded:Connect(onBotAdded)
-    botfold.ChildRemoved:Connect(onBotRemoving)
-end
-Workspace.AiZones.ChildAdded:Connect(function(botfold)
-    botfold.ChildAdded:Connect(onBotAdded)
-    botfold.ChildRemoved:Connect(onBotRemoving)
-end)
-
 RunService.RenderStepped:Connect(function()
     if enabledChams then
         updateHighlights()
     else
         removeHighlights()
-    end
-    if enabledBotChams then
-        updateBotHighlights()
-    else
-        removeBotHighlights()
     end
 end)
 
@@ -7406,27 +7430,6 @@ local function toggleChams(state)
     end
 end
 
-local function toggleBotChams(state)
-    enabledBotChams = state
-    if not enabledBotChams then
-        removeBotHighlights()
-    else
-        for _, botfold in pairs(Workspace.AiZones:GetChildren()) do
-            for _, bot in pairs(botfold:GetChildren()) do
-                if bot:IsA("Model") and bot:FindFirstChild("Humanoid") and bot.Humanoid.Health > 0 then
-                    local root = bot:FindFirstChild("HumanoidRootPart")
-                    if root and (root.Position - localPlayer.Character:GetPivot().Position).Magnitude <= botMaxDistance and isInFOV(root.Position) then
-                        if not botHighlights[bot] then
-                            botHighlights[bot] = createBotHighlight(bot)
-                            botStates[bot] = { lastUpdate = tick(), lastPosition = root.Position }
-                        end
-                    end
-                end
-            end
-        end
-    end
-end
-
 Chams:Toggle({
     Name = "Chams",
     Flag = "MainEnabled",
@@ -7438,61 +7441,27 @@ Chams:Toggle({
 })
 
 Chams:Slider({
-    Name = "Fill Transparency", 
-    Suffix = "%", 
-    Min = 0, 
-    Max = 100, 
+    Name = "Fill Transparency",
+    Suffix = "%",
+    Min = 0,
+    Max = 100,
     Default = 50,
-    Flag = "BoxFillTransparency", 
+    Flag = "BoxFillTransparency",
     Callback = UpdateFillTransparency
 })
 
 Chams:Colorpicker({
-    Name = "Outline Color", 
-    Default = Color3.fromRGB(0, 255, 0), 
-    Flag = "OutlineColor", 
+    Name = "Outline Color",
+    Default = Color3.fromRGB(0, 255, 0),
+    Flag = "OutlineColor",
     Callback = setOutlineColor
 })
 
 Chams:Colorpicker({
-    Name = "Fill Color", 
-    Default = Color3.fromRGB(0, 255, 0), 
-    Flag = "FillColor", 
+    Name = "Fill Color",
+    Default = Color3.fromRGB(0, 255, 0),
+    Flag = "FillColor",
     Callback = setFillColor
-})
-
-BotChams:Toggle({
-    Name = "Bot Chams",
-    Flag = "BotChamsEnabled",
-    Callback = function(value)
-        toggleBotChams(value)
-        showToggleNotification("Bot Chams", value)
-        playToggleSound(value)
-    end
-})
-
-BotChams:Slider({
-    Name = "Bot Fill Transparency", 
-    Suffix = "%", 
-    Min = 0, 
-    Max = 100, 
-    Default = 50,
-    Flag = "BotBoxFillTransparency", 
-    Callback = UpdateBotFillTransparency
-})
-
-BotChams:Colorpicker({
-    Name = "Bot Outline Color", 
-    Default = Color3.fromRGB(255, 0, 0), 
-    Flag = "BotOutlineColor", 
-    Callback = setBotOutlineColor
-})
-
-BotChams:Colorpicker({
-    Name = "Bot Fill Color", 
-    Default = Color3.fromRGB(255, 0, 0), 
-    Flag = "BotFillColor", 
-    Callback = setBotFillColor
 })
 
 local Skeletons = Pages["Renders"]:Section({Name = "Skeletons", Zindex = 6, Side = "Right"})
@@ -8029,6 +7998,7 @@ game:GetService("RunService").Heartbeat:Connect(function()
     end
 end)
 local removeMines = false
+local minesToDelete = {} -- Initialize with an empty table
 
 WorldMods:Toggle({
     Name = "Remove Mines",
@@ -8040,11 +8010,22 @@ WorldMods:Toggle({
     end
 })
 
+WorldMods:List({
+    Name = "Mines to Delete",
+    Flag = "MinesList",
+    Options = {"PMN2", "MON50", "GrenadeTrap"},
+    Default = {}, -- Set default to an empty table
+    Max = 3,
+    Callback = function(selectedMines)
+        minesToDelete = selectedMines
+    end
+})
+
 task.spawn(function()
     while true do
         if removeMines then
             for _, v in ipairs(workspace:GetDescendants()) do
-                if (v.Name == "PMN2" or v.Name == "MON50") and v:IsA("Model") then
+                if table.find(minesToDelete, v.Name) and v:IsA("Model") then
                     v:Destroy()
                 end
             end
@@ -8052,7 +8033,6 @@ task.spawn(function()
         wait(1)
     end
 end)
-
 WorldMods:Toggle({
     Name = "Remove Grass",
     Flag = "WorldNoGrass",
@@ -8094,59 +8074,69 @@ WorldMods:Toggle({
         playToggleSound(value)
     end
 })
-local hiddenParts = {}
+local hideFoliage = false
+local foliageParts = {}
+local connection
 
+local function getFoliageContainer()
+    return workspace:FindFirstChild("Foliage") or workspace:FindFirstChild("SpawnerZones")
+end
 
-local function hideMeshParts()
-    for _, v in pairs(workspace.SpawnerZones:GetDescendants()) do
-        if v.ClassName == "MeshPart" and v:FindFirstChildOfClass("SurfaceAppearance") then
-            v.Transparency = 1
-            v.CanCollide = false
-            v.Anchored = true
-            table.insert(hiddenParts, v)
+local function handleFoliageVisibility(state)
+    local container = getFoliageContainer()
+    if not container then return end
+
+    foliageParts = {} -- Clear the table
+    for _, part in ipairs(container:GetDescendants()) do
+        if part:IsA("BasePart") and part:FindFirstChildOfClass("SurfaceAppearance") then
+            part.Transparency = state and 1 or 0
+            if state then
+                table.insert(foliageParts, part)
+            end
         end
     end
 end
 
-
-local function showMeshParts()
-    for _, part in ipairs(hiddenParts) do
-        part.Transparency = 0
-        part.CanCollide = true
-        part.Anchored = false
-    end
-    hiddenParts = {} 
+local function toggleFoliage(state)
+    hideFoliage = state
+    handleFoliageVisibility(state)
+    showToggleNotification("Remove Foliage", state)
+    playToggleSound(state)
 end
 
-
-local function toggleNoLeaves(state)
-    if state then
-        hideMeshParts()
-        
-        workspace.SpawnerZones.DescendantAdded:Connect(function(inst)
-            if inst.ClassName == "MeshPart" and inst:FindFirstChildOfClass("SurfaceAppearance") then
-                inst.Transparency = 1
-                inst.CanCollide = false
-                inst.Anchored = true
-                table.insert(hiddenParts, inst)
+-- Set up persistent DescendantAdded connection
+local function setupFoliageListener()
+    local container = getFoliageContainer()
+    if container then
+        connection = container.DescendantAdded:Connect(function(part)
+            if hideFoliage and part:IsA("BasePart") and part:FindFirstChildOfClass("SurfaceAppearance") then
+                part.Transparency = 1
+                table.insert(foliageParts, part)
             end
         end)
-    else
-        showMeshParts()
     end
 end
 
+-- Initialize listener and handle container changes
+local function init()
+    setupFoliageListener()
+    workspace.ChildAdded:Connect(function(child)
+        if child.Name == "Foliage" or child.Name == "SpawnerZones" then
+            if connection then
+                connection:Disconnect()
+            end
+            setupFoliageListener()
+        end
+    end)
+end
+
+init()
 
 WorldMods:Toggle({
-    Name = "Remove Leaves",
-    Flag = "NoLeaves",
-    Callback = function(value)
-        toggleNoLeaves(value)
-        showToggleNotification("Remove Leaves", value)
-        playToggleSound(value)
-    end
+    Name = "Remove Foliage",
+    Flag = "HideFoliage",
+    Callback = toggleFoliage
 })
-
 WorldMods:Toggle({
     Name = "Remove Visor",
     Flag = "VisorRemoved",
@@ -8292,18 +8282,19 @@ fovzoom:Toggle({
         end
     end
 })
-
 fovzoom:Toggle({
     Name = "Zoom Changer",
     Flag = "ModifyZoom",
     Default = false,
     Callback = function(value)
         allvars.zoomchanger = value
-        instazoom = value
-		showToggleNotification("Zoom", value)
-		playToggleSound(value)	
+        showToggleNotification("Zoom", value)
+        playToggleSound(value)
+        if not value then
+            instazoom = false -- Disable zoom when toggle is off
+        end
         if dop4 then
-            local targetfov = instazoom and allvars.zoomfov or allvars.basefov
+            local targetfov = (allvars.zoomchanger and instazoom) and allvars.zoomfov or allvars.basefov
             dop4.FieldOfView = targetfov
         end
     end
@@ -8312,10 +8303,10 @@ fovzoom:Toggle({
     Flag = "Zoom",
     Mode = "Toggle",
     Callback = function(value)
-        if not allvars.zoomchanger then return end
+        if not allvars.zoomchanger then return end -- Zoom only works if toggle is enabled
         instazoom = value
-		showToggleNotification("Zoom", value)
-		playToggleSound(value)	
+        showToggleNotification("Zoom", value)
+        playToggleSound(value)
         if dop4 then
             local targetfov = value and allvars.zoomfov or allvars.basefov
             dop4.FieldOfView = targetfov
@@ -8574,189 +8565,271 @@ ThirdPersonFix()
 if localplayer.Character then
     SetupTransparencyController()
 end
-
-
 local Camera = game:GetService("Workspace").CurrentCamera
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
-
 local Toggles = {
-    ArmsM = { Value = false }, 
-    GunM = { Value = false }   
+    ArmsM = { Value = false },
+    GunM = { Value = false },
+    HideArms = { Value = false }
 }
 local Options = {
-    ArmsColor = { Value = Color3.fromRGB(150, 150, 150) }, 
-    GunColor = { Value = Color3.fromRGB(150, 150, 150) },  
-    SelectArmsMaterial = { Value = "Neon" },          
-    SelectGunMaterial = { Value = "Neon" }            
+    ArmsFillColor = { Value = Color3.fromRGB(150, 150, 150) },
+    ArmsOutlineColor = { Value = Color3.fromRGB(255, 255, 255) },
+    GunFillColor = { Value = Color3.fromRGB(150, 150, 150) },
+    GunOutlineColor = { Value = Color3.fromRGB(255, 255, 255) },
+    ArmsFillTransparency = { Value = 0 },
+    GunFillTransparency = { Value = 0 }
 }
+local originalTransparencies = {}
 
-
-local MaterialMap = {
-    ["Neon"] = "Neon",
-    ["ForceField"] = "ForceField",
-    ["SmoothPlastic"] = "SmoothPlastic",
-    ["Glass"] = "Glass",
-
-}
-
+local function applyHighlight(parent, fillColor, outlineColor, fillTransparency, enabled)
+    local hl = parent:FindFirstChildOfClass("Highlight")
+    if not hl then
+        hl = Instance.new("Highlight")
+        hl.Adornee = parent
+        hl.Parent = parent
+    end
+    hl.FillColor = fillColor
+    hl.OutlineColor = outlineColor
+    hl.FillTransparency = fillTransparency / 100
+    hl.OutlineTransparency = enabled and 0 or 1
+    hl.Enabled = enabled
+end
 
 local function applyChams()
     local vm = Camera:FindFirstChildOfClass("Model")
     if not vm then return end
-    repeat task.wait() until vm.Name == "ViewModel"
 
-    local armColor = Options.ArmsColor.Value
-    local gunColor = Options.GunColor.Value
-    local armMaterial = MaterialMap[Options.SelectArmsMaterial.Value] or "SmoothPlastic"
-    local gunMaterial = MaterialMap[Options.SelectGunMaterial.Value] or "SmoothPlastic"
+    local timeout = 5
+    local startTime = tick()
+    repeat
+        task.wait()
+        if tick() - startTime > timeout then
+            return
+        end
+    until vm.Name == "ViewModel"
 
-    
+    local armFillColor = Options.ArmsFillColor.Value
+    local armOutlineColor = Options.ArmsOutlineColor.Value
+    local gunFillColor = Options.GunFillColor.Value
+    local gunOutlineColor = Options.GunOutlineColor.Value
+    local armFillTransparency = Options.ArmsFillTransparency.Value
+    local gunFillTransparency = Options.GunFillTransparency.Value
+
+    for _, v in pairs(vm:GetDescendants()) do
+        if v:IsA("Highlight") then
+            v:Destroy()
+        end
+    end
+
     local ItemView = vm:FindFirstChild("Item")
     if ItemView and Toggles.GunM.Value then
+        applyHighlight(ItemView, gunFillColor, gunOutlineColor, gunFillTransparency, true)
         for _, v in pairs(ItemView:GetDescendants()) do
-            if v.ClassName == "MeshPart" or v.ClassName == "Part" then
-                v.Material = Enum.Material[gunMaterial]
-                v.Color = gunColor
-            end
-            if v:FindFirstChildOfClass("SurfaceAppearance") then
-                v:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
+            if (v.ClassName == "MeshPart" or v.ClassName == "Part") and v:FindFirstChildOfClass("SurfaceAppearance") then
+                if not v:IsA("BasePart") then
+                    v:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
+                end
             end
         end
     end
 
-    
-    if Toggles.ArmsM.Value then
+    if Toggles.ArmsM.Value or Toggles.HideArms.Value then
         for _, vm_item in pairs(vm:GetChildren()) do
-            if vm_item.ClassName == "MeshPart" then
-                if vm_item.Name:find("Hand") or vm_item.Name:find("Arm") then
-                    vm_item.Material = Enum.Material[armMaterial]
-                    vm_item.Color = armColor
+            if vm_item.ClassName == "MeshPart" and (vm_item.Name:find("Hand") or vm_item.Name:find("Arm")) then
+                if Toggles.ArmsM.Value then
+                    applyHighlight(vm_item, armFillColor, armOutlineColor, armFillTransparency, not Toggles.HideArms.Value)
                 end
-            end
-            if vm_item.ClassName == "Model" and (vm_item:FindFirstChild("LL") or vm_item:FindFirstChild("LH")) then
+                if not originalTransparencies[vm_item] then
+                    originalTransparencies[vm_item] = vm_item.Transparency
+                end
+                vm_item.Transparency = Toggles.HideArms.Value and 1 or originalTransparencies[vm_item]
+            elseif vm_item.ClassName == "Model" and (vm_item:FindFirstChild("LL") or vm_item:FindFirstChild("LH")) then
+                if Toggles.ArmsM.Value then
+                    applyHighlight(vm_item, armFillColor, armOutlineColor, armFillTransparency, not Toggles.HideArms.Value)
+                end
                 for _, shirt_item in pairs(vm_item:GetChildren()) do
-                    if shirt_item:FindFirstChildOfClass("SurfaceAppearance") then
+                    if shirt_item:IsA("BasePart") then
+                        if not originalTransparencies[shirt_item] then
+                            originalTransparencies[shirt_item] = shirt_item.Transparency
+                        end
+                        shirt_item.Transparency = Toggles.HideArms.Value and 1 or originalTransparencies[shirt_item]
+                    end
+                    if shirt_item:FindFirstChildOfClass("SurfaceAppearance") and not shirt_item:IsA("BasePart") then
                         shirt_item:FindFirstChildOfClass("SurfaceAppearance"):Destroy()
                     end
-                    shirt_item.Material = Enum.Material[armMaterial]
-                    shirt_item.Color = armColor
                 end
             end
         end
     end
 end
 
+local function enforceArmTransparency()
+    if not Toggles.HideArms.Value then return end
+    local vm = Camera:FindFirstChildOfClass("Model")
+    if not vm or vm.Name ~= "ViewModel" then return end
 
-Camera.DescendantAdded:Connect(applyChams)
+    for _, vm_item in pairs(vm:GetChildren()) do
+        if vm_item.ClassName == "MeshPart" and (vm_item.Name:find("Hand") or vm_item.Name:find("Arm")) then
+            vm_item.Transparency = 1
+        elseif vm_item.ClassName == "Model" and (vm_item:FindFirstChild("LL") or vm_item:FindFirstChild("LH")) then
+            for _, shirt_item in pairs(vm_item:GetChildren()) do
+                if shirt_item:IsA("BasePart") then
+                    shirt_item.Transparency = 1
+                end
+            end
+        end
+    end
+end
 
+Camera.ChildAdded:Connect(function(child)
+    if child:IsA("Model") and child.Name == "ViewModel" then
+        applyChams()
+    end
+end)
 
+RunService.RenderStepped:Connect(enforceArmTransparency)
 
 local ArmsMods, GunPosMods = Pages["Misc"]:MultiSection({Sections = {"Arms Modificators", "Gun Position"}, Side = "Left", Zindex = 4})
 
-
 ArmsMods:Toggle({
-    Name = "Arms Material",
+    Name = "Arms Highlight",
     Flag = "ArmsM",
     Callback = function(value)
         Toggles.ArmsM.Value = value
-        applyChams() 
-		showToggleNotification("Arms Material", value)
-		playToggleSound(value)		
+        applyChams()
+        showToggleNotification("Arms Highlight", value)
+        playToggleSound(value)
     end
 })
 
 ArmsMods:Toggle({
-    Name = "Gun Material",
+    Name = "Gun Highlight",
     Flag = "GunM",
     Callback = function(value)
         Toggles.GunM.Value = value
-        applyChams() 
-		showToggleNotification("Gun Material", value)
-		playToggleSound(value)	
-    end
-})
-ArmsMods:Colorpicker({
-    Name = "Arms Color",
-    Default = Options.ArmsColor.Value,
-    Flag = "ArmsColor",
-    Callback = function(value)
-        Options.ArmsColor.Value = value
-        applyChams() 
+        applyChams()
+        showToggleNotification("Gun Highlight", value)
+        playToggleSound(value)
     end
 })
 
+ArmsMods:Toggle({
+    Name = "Hide Arms",
+    Flag = "HideArms",
+    Callback = function(value)
+        Toggles.HideArms.Value = value
+        applyChams()
+        showToggleNotification("Hide Arms", value)
+        playToggleSound(value)
+    end
+})
 
 ArmsMods:Colorpicker({
-    Name = "Gun Color",
-    Default = Options.GunColor.Value,
-    Flag = "GunColor",
+    Name = "Arms Fill Color",
+    Default = Options.ArmsFillColor.Value,
+    Flag = "ArmsFillColor",
     Callback = function(value)
-        Options.GunColor.Value = value
-        applyChams() 
+        Options.ArmsFillColor.Value = value
+        applyChams()
     end
 })
-ArmsMods:List({
-    Name = "Arms Materials",
-    Flag = "SelectArmsMaterial",
-    Options = {"Neon", "ForceField", "SmoothPlastic", "Glass"},
-    Default = "Neon",
+
+ArmsMods:Colorpicker({
+    Name = "Arms Outline Color",
+    Default = Options.ArmsOutlineColor.Value,
+    Flag = "ArmsOutlineColor",
     Callback = function(value)
-        Options.SelectArmsMaterial.Value = value
-        applyChams() 
+        Options.ArmsOutlineColor.Value = value
+        applyChams()
     end
 })
-ArmsMods:List({
-    Name = "Gun Materials",
-    Flag = "SelectGunMaterial",
-    Options = {"Neon", "ForceField", "SmoothPlastic", "Glass"},
-    Default = "Neon",
+
+ArmsMods:Colorpicker({
+    Name = "Gun Fill Color",
+    Default = Options.GunFillColor.Value,
+    Flag = "GunFillColor",
     Callback = function(value)
-        Options.SelectGunMaterial.Value = value
-        applyChams() 
+        Options.GunFillColor.Value = value
+        applyChams()
     end
 })
+
+ArmsMods:Colorpicker({
+    Name = "Gun Outline Color",
+    Default = Options.GunOutlineColor.Value,
+    Flag = "GunOutlineColor",
+    Callback = function(value)
+        Options.GunOutlineColor.Value = value
+        applyChams()
+    end
+})
+
+ArmsMods:Slider({
+    Name = "Arms Fill Transparency",
+    Suffix = "%",
+    Min = 0,
+    Max = 100,
+    Default = 0,
+    Flag = "ArmsFillTransparency",
+    Callback = function(value)
+        Options.ArmsFillTransparency.Value = value
+        applyChams()
+    end
+})
+
+ArmsMods:Slider({
+    Name = "Gun Fill Transparency",
+    Suffix = "%",
+    Min = 0,
+    Max = 100,
+    Default = 0,
+    Flag = "GunFillTransparency",
+    Callback = function(value)
+        Options.GunFillTransparency.Value = value
+        applyChams()
+    end
+})
+
 local viewmodoffset = false
-local viewmodX = -2
-local viewmodY = -2
+local viewmodX = 0
+local viewmodY = 0
 local viewmodZ = 0
-
-
 
 GunPosMods:Toggle({
     Name = "Gun Offset",
     Flag = "Gunoffset",
     Callback = function(value)
         viewmodoffset = value
-		showToggleNotification("Gun Offset", value)
-		playToggleSound(value)	
+        showToggleNotification("Gun Offset", value)
+        playToggleSound(value)
     end
 })
-
 
 GunPosMods:Slider({
     Name = "X offset",
-    Suffix = "°",
-    Min = 30,
-    Max = 120,
-    Default = 70,
-    Flag = "fov_value",
+    Min = -5,
+    Max = 5,
+    Default = 0,
+    Flag = "x_offset",
     Callback = function(value)
-        viewmodX = value / 35 - 2 
+        viewmodX = value
     end
 })
-
 
 GunPosMods:Slider({
     Name = "Y offset",
     Min = -5,
     Max = 5,
-    Default = -2,
+    Default = 0,
     Callback = function(value)
         viewmodY = value
     end
 })
+
 GunPosMods:Slider({
     Name = "Z offset",
     Min = -5,
@@ -8767,27 +8840,41 @@ GunPosMods:Slider({
     end
 })
 
-
-
 local mod = require(game.ReplicatedStorage.Modules.FPS)
 local ogfunc = mod.updateClient
 
 mod.updateClient = function(a1, a2, a3)
-    local arg1, arg2, arg3 = ogfunc(a1, a2, a3)
+    local success, arg1, arg2, arg3 = pcall(ogfunc, a1, a2, a3)
+    if not success then
+        return a1, a2, a3
+    end
     
     if viewmodoffset then
         a1.sprintIdleOffset = CFrame.new(Vector3.new(viewmodX, viewmodY, viewmodZ))
         a1.weaponOffset = CFrame.new(Vector3.new(viewmodX, viewmodY, viewmodZ))
-        a1.AimInSpeed = 9e9
-    else
-        a1.AimInSpeed = 0.4
     end
-
+    
     return arg1, arg2, arg3
 end
 
+Misc = Pages["Misc"]:Section({Name = "Misc", Zindex = 1, Side = "Right"})
+Misc:Button({
+    Name = "Explode Outpost Mines",
+    Callback = function()
+        for _, landmine in ipairs(workspace.AiZones.OutpostLandmines:GetChildren()) do
+		if landmine.Name == "PMN2" then
+			landmine:PivotTo(CFrame.new(game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position - Vector3.new(0, game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Size.Y / 2 + 1, 0)))
+		end
+	end
+    end
+})
 
-
+Misc:Button({
+    Name = "Rejoin Server",
+    Callback = function()
+		game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId,game.JobId) 
+	end
+})
 do
 local Movement = Pages["Movement"]:Section({Name = "Main Movement", Zindex = 5, Side = "Left"})
 local PlayersService = game:GetService("Players")
@@ -8820,25 +8907,7 @@ Movement:Toggle({
 		playToggleSound(value)		
     end
 })
-function handleClientAntiCheatBypass()
-    if ACBYPASS_SYNC == true then return end
-    local mt = getrawmetatable(game)
-    local oldNamecall = mt.__namecall
-    setreadonly(mt, false)
-    mt.__namecall = newcclosure(function(self, ...)
-        local Method = getnamecallmethod()
-        local Args = {...}
-        if Method == "FireServer" and self.Name == "ProjectileInflict" then
-            if Args[1] == game.Players.LocalPlayer.Character.PrimaryPart then
-                return coroutine.yield()
-            end
-        end
-        return oldNamecall(self, ...)
-    end)
-    setreadonly(mt, true)
-    ACBYPASS_SYNC = true
-end
-handleClientAntiCheatBypass()
+
 local defaultGravity = 69
 local isGravityEnabled = false
 local currentGravityValue = 69
