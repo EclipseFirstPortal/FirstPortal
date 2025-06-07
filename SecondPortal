@@ -7221,7 +7221,7 @@ BotESP:Colorpicker({
     Default = BE.Color, 
     Callback = BUpdateColors
 })
-local Chams = Pages["Renders"]:Section({Name = "Chams", Zindex = 6, Side = "Right"})
+local Chams = Pages["Renders"]:Section({Name = "Chams", Zindex = 90, Side = "Right"})
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local Workspace = game:GetService("Workspace")
