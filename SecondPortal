@@ -650,7 +650,7 @@ do
 			ImageLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
 			ImageLabel.BorderSizePixel = 0
 			ImageLabel.Position = UDim2.new(0.1, 0, 0.1, 0)
-			ImageLabel.Size = UDim2.new(0, 700, 0, 610)
+			ImageLabel.Size = UDim2.new(0, 700, 0, 625)
 
 			local MainFrame = Instance.new("TextButton")
 			MainFrame.Name = "MainFrame"
@@ -4454,46 +4454,45 @@ G2L.u.SortOrder = Enum.SortOrder.LayoutOrder
 G2L.u.FillDirection = Enum.FillDirection.Vertical
 G2L.u.HorizontalAlignment = Enum.HorizontalAlignment.Right
 
--- Global variables
-local aimbool = false
-local aimselftrack = true
-local aimbots = false
-local aimvischeck = false
-local aimmousefov = false
-local aimfakewait = true
-local aimpart = "Head"
-local aimfov = 150
-local aimchance = 100
-local aimtarget = nil
-local aimtargetpart = nil
-local aimfovcircle = Drawing.new("Circle")
-local aimfovcircle_outer = Drawing.new("Circle")
-local aimfovcircle_inner = Drawing.new("Circle")
-local aimfovcircle_fill = Drawing.new("Circle")
-local aimogfunc = Bullet.CreateBullet
-local aimignoreparts = {}
-local aimfriendcheck = false
-local hitsoundvolume = 0.5
-local a1table = nil
-local aimfovfill_enabled = false
-local aimfovfill_transparency = 0.3
-local targetui_enabled = false
-local last_target_update = 0
-local target_update_cooldown = 0.1
-local last_health = 0
-local last_target = nil
-local last_ui_pos = G2L.b.Position
-local last_aimtarget = nil
-local is_ui_visible = false
-local tweening = false
-local replicatedPlayers = ReplicatedStorage:WaitForChild("Players")
-local showTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-local hideTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
-local multibullet = false
-local multibullet_count = 1
-local aimfovcircle_numsides = 32
-local selftrack_data = {}
-local selftrack_update = 0
+aimbool = false
+aimselftrack = true
+aimbots = false
+aimvischeck = false
+aimmousefov = false
+aimfakewait = true
+aimpart = "Head"
+aimfov = 150
+aimchance = 100
+aimtarget = nil
+aimtargetpart = nil
+aimfovcircle = Drawing.new("Circle")
+aimfovcircle_outer = Drawing.new("Circle")
+aimfovcircle_inner = Drawing.new("Circle")
+aimfovcircle_fill = Drawing.new("Circle")
+aimogfunc = Bullet.CreateBullet
+aimignoreparts = {}
+aimfriendcheck = false
+hitsoundvolume = 0.5
+a1table = nil
+aimfovfill_enabled = false
+aimfovfill_transparency = 0.3
+targetui_enabled = false
+last_target_update = 0
+target_update_cooldown = 0.1
+last_health = 0
+last_target = nil
+last_ui_pos = G2L.b.Position
+last_aimtarget = nil
+is_ui_visible = false
+tweening = false
+replicatedPlayers = ReplicatedStorage:WaitForChild("Players")
+showTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+hideTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
+multibullet = false
+multibullet_count = 1
+aimfovcircle_numsides = 32
+selftrack_data = {}
+selftrack_update = 0
 hitmarkbool = false
 hitsoundbool = false
 hitsoundhead = "Gamesense"
@@ -4512,12 +4511,11 @@ tractextures = {
     Glow = "http://www.roblox.com/asset/?id=78260707920108",
     Lighting = "http://www.roblox.com/asset/?id=131326755401058"
 }
-local globalcurrentgun = nil
-local globalammo = nil
-local hitmarkcolor_new = Color3.new(1, 1, 1)
-local fovcircle_enabled = false
+globalcurrentgun = nil
+globalammo = nil
+hitmarkcolor_new = Color3.new(1, 1, 1)
+fovcircle_enabled = false
 
--- Initialize FOV circles
 aimfovcircle.Visible = false
 aimfovcircle.Radius = aimfov
 aimfovcircle.Thickness = 2
@@ -4553,19 +4551,16 @@ aimfovcircle_fill.Color = aimfovcircle.Color
 aimfovcircle_fill.Position = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
 aimfovcircle_fill.NumSides = aimfovcircle_numsides
 
--- Cache UI elements for tweening
-local uiFrames = {G2L.b, G2L.d, G2L.e, G2L.k, G2L.p, G2L.s}
-local uiStrokes = {G2L.c, G2L.f, G2L.m, G2L.r, G2L.t}
-local uiTextLabels = {G2L.g, G2L.h, G2L.i, G2L.j, G2L.n, G2L.o}
+uiFrames = {G2L.b, G2L.d, G2L.e, G2L.k, G2L.p, G2L.s}
+uiStrokes = {G2L.c, G2L.f, G2L.m, G2L.r, G2L.t}
+uiTextLabels = {G2L.g, G2L.h, G2L.i, G2L.j, G2L.n, G2L.o}
 
--- Initialize aimignoreparts
 for _, v in ipairs(Workspace:GetDescendants()) do
     if v:GetAttribute("PassThrough") then
         table.insert(aimignoreparts, v)
     end
 end
 
--- Initialize selftrack_data
 for i = 10, 1000, 10 do
     selftrack_data[i] = LocalPlayer.Character and LocalPlayer.Character.HumanoidRootPart and LocalPlayer.Character.HumanoidRootPart.Position + Vector3.new(0, 1.3, 0) or Vector3.zero
 end
@@ -4722,8 +4717,8 @@ function isonscreen(object)
     return onScreen
 end
 
-local UniversalTables = require(ReplicatedStorage.Modules:WaitForChild("UniversalTables"))
-local globalist11 = UniversalTables.ReturnTable("GlobalIgnoreListProjectile")
+UniversalTables = require(ReplicatedStorage.Modules:WaitForChild("UniversalTables"))
+globalist11 = UniversalTables.ReturnTable("GlobalIgnoreListProjectile")
 function isvisible(char, object)
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") or not aimvischeck then
         return true
@@ -4882,7 +4877,7 @@ function updateInventoryText(targetPlayer)
     end
 end
 
-local hitmarkfade = 2
+hitmarkfade = 2
 function runhitmark(v140)
     if not hitmarkbool then return end
     local hitpart = Instance.new("Part", Workspace)
@@ -5209,6 +5204,7 @@ Enabled:Toggle({
         end
     end
 })
+
 
 Enabled:Toggle({
     Name = "Target UI",
@@ -7684,17 +7680,6 @@ HitSound:Toggle({
 		playToggleSound(value)	
     end
 })
-
-HitSound:List({
-    Name = "Headshot Sound",
-    Flag = "HeadshotSound",
-    Options = {"Gamesense", "Rust", "Neverlose", "Bubble","Fatality"},
-    Default = "Gamesense",
-    Callback = function(value)
-        hitsoundhead = value
-    end
-})
-
 HitSound:Slider({
     Name = "HitSound Volume",
     Suffix = "%",
@@ -7703,9 +7688,19 @@ HitSound:Slider({
     Default = 50,
     Flag = "HitSoundVolume",
     Callback = function(value)
-        hitsoundvolume = value / 100 
+        hitsoundvolume = value / 100
     end
 })
+HitSound:List({
+    Name = "Hit Sound",
+    Flag = "HeadshotSound",
+    Options = {"Gamesense", "Rust", "Neverlose", "Bubble","Fatality"},
+    Default = "Gamesense",
+    Callback = function(value)
+        hitsoundhead = value
+    end
+})
+
 HitSound:Button({
     Name = "Listen Sound",
     Callback = function()
@@ -8010,16 +8005,7 @@ WorldMods:Toggle({
     end
 })
 
-WorldMods:List({
-    Name = "Mines to Delete",
-    Flag = "MinesList",
-    Options = {"PMN2", "MON50", "GrenadeTrap"},
-    Default = {}, -- Set default to an empty table
-    Max = 3,
-    Callback = function(selectedMines)
-        minesToDelete = selectedMines
-    end
-})
+
 
 task.spawn(function()
     while true do
@@ -8262,6 +8248,16 @@ WorldMods:Colorpicker({
         if ambientEnabled then
             updateAmbient()
         end
+    end
+})
+WorldMods:List({
+    Name = "Mines to Delete",
+    Flag = "MinesList",
+    Options = {"PMN2", "MON50", "GrenadeTrap"},
+    Default = {}, -- Set default to an empty table
+    Max = 3,
+    Callback = function(selectedMines)
+        minesToDelete = selectedMines
     end
 })
 local fovzoom = Pages["Misc"]:Section({Name = "Fov/Zoom", Zindex = 2, Side = "Left"})
@@ -8950,7 +8946,7 @@ Movement:Slider({
     Flag = "SBv",
     Callback = function(value)
         currentGravityValue = value
-        SpeedEnhancerConfig.Boost.Intensity = value / 50
+
         updateGravity()
     end
 })
