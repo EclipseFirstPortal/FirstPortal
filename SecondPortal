@@ -4259,7 +4259,7 @@ G2L.u.HorizontalAlignment = Enum.HorizontalAlignment.Right
 
 G2L = {}
 
--- Cache services
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -4270,7 +4270,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = Workspace.CurrentCamera
 local Bullet = require(ReplicatedStorage.Modules.FPS.Bullet)
 
--- Initialize UI
+
 G2L.a = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
 G2L.a.Name = "TargetInfo"
 G2L.a.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -7993,7 +7993,7 @@ game:GetService("RunService").Heartbeat:Connect(function()
     end
 end)
 local removeMines = false
-local minesToDelete = {} -- Initialize with an empty table
+local minesToDelete = {} 
 
 WorldMods:Toggle({
     Name = "Remove Mines",
@@ -8072,7 +8072,7 @@ local function handleFoliageVisibility(state)
     local container = getFoliageContainer()
     if not container then return end
 
-    foliageParts = {} -- Clear the table
+    foliageParts = {} 
     for _, part in ipairs(container:GetDescendants()) do
         if part:IsA("BasePart") and part:FindFirstChildOfClass("SurfaceAppearance") then
             part.Transparency = state and 1 or 0
@@ -8090,7 +8090,7 @@ local function toggleFoliage(state)
     playToggleSound(state)
 end
 
--- Set up persistent DescendantAdded connection
+
 local function setupFoliageListener()
     local container = getFoliageContainer()
     if container then
@@ -8103,7 +8103,7 @@ local function setupFoliageListener()
     end
 end
 
--- Initialize listener and handle container changes
+
 local function init()
     setupFoliageListener()
     workspace.ChildAdded:Connect(function(child)
@@ -8254,7 +8254,7 @@ WorldMods:List({
     Name = "Mines to Delete",
     Flag = "MinesList",
     Options = {"PMN2", "MON50", "GrenadeTrap"},
-    Default = {}, -- Set default to an empty table
+    Default = {}, 
     Max = 3,
     Callback = function(selectedMines)
         minesToDelete = selectedMines
@@ -8287,7 +8287,7 @@ fovzoom:Toggle({
         showToggleNotification("Zoom", value)
         playToggleSound(value)
         if not value then
-            instazoom = false -- Disable zoom when toggle is off
+            instazoom = false 
         end
         if dop4 then
             local targetfov = (allvars.zoomchanger and instazoom) and allvars.zoomfov or allvars.basefov
@@ -8299,7 +8299,7 @@ fovzoom:Toggle({
     Flag = "Zoom",
     Mode = "Toggle",
     Callback = function(value)
-        if not allvars.zoomchanger then return end -- Zoom only works if toggle is enabled
+        if not allvars.zoomchanger then return end 
         instazoom = value
         showToggleNotification("Zoom", value)
         playToggleSound(value)
