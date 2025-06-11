@@ -4490,7 +4490,7 @@ showTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.I
 hideTweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 multibullet = false
 multibullet_count = 1
-aimfovcircle_numsides = 32
+aimfovcircle_numsides = 100
 selftrack_data = {}
 selftrack_update = 0
 hitmarkbool = false
@@ -5309,7 +5309,7 @@ Fov:Toggle({
 })
 Fov:Colorpicker({
     Name = "Fov Color",
-    Default = Color3.fromRGB(255, 255, 255),
+    Default = Color3.fromRGB(115, 100, 215),
     Transparency = 1,
     Flag = "FovColor",
     Callback = function(color)
@@ -5365,21 +5365,7 @@ Fov:Slider({
     end
 })
 
-Fov:Slider({
-    Name = "Fov Sides",
-    Suffix = "sides",
-    Min = 6,
-    Max = 60,
-    Default = 32,
-    Flag = "FovCircleSides",
-    Callback = function(value)
-        aimfovcircle_numsides = value
-        aimfovcircle.NumSides = value
-        aimfovcircle_outer.NumSides = value
-        aimfovcircle_inner.NumSides = value
-        aimfovcircle_fill.NumSides = value
-    end
-})
+
 
 resolver = Pages["Aiming"]:Section({
     Name = "UnderGround Resolver/Upangle Resolver", 
@@ -6171,7 +6157,7 @@ local IsDesyncActive = false
 local DesyncConnection = nil
 local OffsetX, OffsetY, OffsetZ = 0, -2, 0
 local RandomRange = 0
-local UseRelativeOffset = false
+local UseRelativeOffset = true
 local RotationX, RotationY, RotationZ = 84, 0, 0
 local FillTransparency = 0
 local FillColor = Color3.fromRGB(255, 255, 255)
@@ -6409,7 +6395,7 @@ underground:Toggle({
 underground:Colorpicker({
 	Name = "Fill Color",
 	Flag = "Desyncfillcolor",
-	Default = Color3.fromRGB(255, 255, 255),
+	Default = Color3.fromRGB(115, 100, 215),
 	Callback = function(value)
 		FillColor = value
 		ApplyColor(value)
@@ -7231,8 +7217,8 @@ local localPlayer = Players.LocalPlayer
 local enabledChams = false
 local maxDistance = 2000
 local fillTransparency = 0.5
-local outlineColor = Color3.fromRGB(0, 255, 0)
-local fillColor = Color3.fromRGB(0, 255, 0)
+local outlineColor = Color3.fromRGB(0, 0, 0)
+local fillColor = Color3.fromRGB(115, 100, 215)
 
 local playerHighlights = {}
 local playerStates = {}
@@ -8857,11 +8843,26 @@ Misc = Pages["Misc"]:Section({Name = "Misc", Zindex = 1, Side = "Right"})
 Misc:Button({
     Name = "Explode Outpost Mines",
     Callback = function()
-        for _, landmine in ipairs(workspace.AiZones.OutpostLandmines:GetChildren()) do
-		if landmine.Name == "PMN2" then
-			landmine:PivotTo(CFrame.new(game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position - Vector3.new(0, game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Size.Y / 2 + 1, 0)))
-		end
-	end
+        local success, result = pcall(function()
+            local minesFound = false
+            for _, landmine in ipairs(workspace.AiZones.OutpostLandmines:GetChildren()) do
+                if landmine.Name == "PMN2" then
+                    landmine:PivotTo(CFrame.new(game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Position - Vector3.new(0, game:GetService("Players").LocalPlayer.Character.HumanoidRootPart.Size.Y / 2 + 1, 0)))
+                    minesFound = true
+                end
+            end
+            return minesFound
+        end)
+        
+        if success then
+            if result then
+                Notifications:Notification("Mines successfully detonated!", 5, Library.Accent, false)
+            else
+                Notifications:Notification("Mines not found", 5, Library.Accent, false)
+            end
+        else
+            Notifications:Notification("Mines not detected", 5, Library.Accent, false)
+        end
     end
 })
 
