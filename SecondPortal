@@ -5379,7 +5379,7 @@ local isResolving = false
 local resolveTimer = tick()
 local playerPosition = player.Character and player.Character.HumanoidRootPart and player.Character.HumanoidRootPart.CFrame or CFrame.new()
 local resolveTimeout = 0.7
-local manipulateModels = true
+local manipulateModels = false
 local hiddenPlayers = {}
 local resolverEnabled = false
 local resolverHeight = -15
@@ -6163,255 +6163,288 @@ local FillTransparency = 0
 local FillColor = Color3.fromRGB(255, 255, 255)
 
 local animationParams = {
-	id = "rbxassetid://15609995579",
-	timePos = 2.35,
-	speed = 0
+    id = "rbxassetid://15609995579",
+    timePos = 2.35,
+    speed = 0
 }
 
+local currentAnimationTrack = nil
+
 local function ApplyColor(color)
-	for _, part in pairs({Torso, LeftArm, RightArm, LeftLeg, RightLeg, Head}) do
-		if part then
-			part.BrickColor = BrickColor.new(color)
-		end
-	end
+    for _, part in pairs({Torso, LeftArm, RightArm, LeftLeg, RightLeg, Head}) do
+        if part then
+            part.BrickColor = BrickColor.new(color)
+        end
+    end
 end
 
 local function CreatePart(name, size, position)
-	local part = Instance.new("Part")
-	part.Name = name
-	part.Size = size
-	part.Position = position
-	part.Anchored = true
-	part.CanCollide = false
-	part.CanTouch = false
-	part.CanQuery = false
-	part.Transparency = 1
-	part.BrickColor = BrickColor.new(FillColor)
-	part.Material = Enum.Material.ForceField
-	part.Parent = RigModel
-	part.CastShadow = false
-	return part
+    local part = Instance.new("Part")
+    part.Name = name
+    part.Size = size
+    part.Position = position
+    part.Anchored = true
+    part.CanCollide = false
+    part.CanTouch = false
+    part.CanQuery = false
+    part.Transparency = 1
+    part.BrickColor = BrickColor.new(FillColor)
+    part.Material = Enum.Material.ForceField
+    part.Parent = RigModel
+    part.CastShadow = false
+    return part
 end
 
 local function CreateRigModel()
-	if RigModel and RigModel.Parent then
-		RigModel:Destroy()
-	end
-	RigModel = Instance.new("Model")
-	RigModel.Name = "RigR6Model"
-	RigModel.Parent = workspace
-	Torso = CreatePart("Torso", Vector3.new(2, 2, 1), Vector3.new(0, 14, 1))
-	LeftArm = CreatePart("LeftArm", Vector3.new(1, 2, 1), Vector3.new(-1.5, 14, 1))
-	RightArm = CreatePart("RightArm", Vector3.new(1, 2, 1), Vector3.new(1.5, 14, 1))
-	LeftLeg = CreatePart("LeftLeg", Vector3.new(1, 2, 1), Vector3.new(-0.5, 12, 1))
-	RightLeg = CreatePart("RightLeg", Vector3.new(1, 2, 1), Vector3.new(0.5, 12, 1))
-	Head = CreatePart("Head", Vector3.new(1, 2, 1), Vector3.new(0, 15, 1))
-	ApplyColor(FillColor)
+    if RigModel and RigModel.Parent then
+        RigModel:Destroy()
+    end
+    RigModel = Instance.new("Model")
+    RigModel.Name = "RigR6Model"
+    RigModel.Parent = workspace
+    Torso = CreatePart("Torso", Vector3.new(2, 2, 1), Vector3.new(0, 14, 1))
+    LeftArm = CreatePart("LeftArm", Vector3.new(1, 2, 1), Vector3.new(-1.5, 14, 1))
+    RightArm = CreatePart("RightArm", Vector3.new(1, 2, 1), Vector3.new(1.5, 14, 1))
+    LeftLeg = CreatePart("LeftLeg", Vector3.new(1, 2, 1), Vector3.new(-0.5, 12, 1))
+    RightLeg = CreatePart("RightLeg", Vector3.new(1, 2, 1), Vector3.new(0.5, 12, 1))
+    Head = CreatePart("Head", Vector3.new(1, 2, 1), Vector3.new(0, 15, 1))
+    ApplyColor(FillColor)
 end
 
 CreateRigModel()
 
 local function handleAnimation()
-	local shouldPlay = IsDesyncEnabled and IsDesyncActive and Humanoid.Health > 0
-	for _, track in pairs(Animator:GetPlayingAnimationTracks()) do
-		if track.Animation.AnimationId == animationParams.id then
-			track:Stop()
-			shouldPlay = IsDesyncEnabled and IsDesyncActive and Humanoid.Health > 0
-			break
-		end
-	end
-	if shouldPlay then
-		local anim = Instance.new("Animation")
-		anim.AnimationId = animationParams.id
-		local track = Animator:LoadAnimation(anim)
-		track:Play()
-		track.TimePosition = animationParams.timePos
-		track:AdjustSpeed(animationParams.speed)
-	end
+    
+    if currentAnimationTrack then
+        currentAnimationTrack:Stop()
+        currentAnimationTrack = nil
+    end
+    
+    
+    if IsDesyncEnabled and IsDesyncActive then
+        local anim = Instance.new("Animation")
+        anim.AnimationId = animationParams.id
+        currentAnimationTrack = Animator:LoadAnimation(anim)
+        currentAnimationTrack:Play()
+        currentAnimationTrack.TimePosition = animationParams.timePos
+        currentAnimationTrack:AdjustSpeed(animationParams.speed)
+    end
 end
 
 local function UpdateRig(desyncCFrame)
-	if Character and HumanoidRootPart then
-		if IsDesyncEnabled and IsVisualizeEnabled and desyncCFrame then
-			Torso.CFrame = desyncCFrame
-		else
-			Torso.CFrame = HumanoidRootPart.CFrame
-		end
-	end
-	local torsoCFrame = Torso.CFrame
-	LeftArm.CFrame = torsoCFrame * CFrame.new(-1.5, 0, 0)
-	RightArm.CFrame = torsoCFrame * CFrame.new(1.5, 0, 0)
-	LeftLeg.CFrame = torsoCFrame * CFrame.new(-0.5, -2, 0)
-	RightLeg.CFrame = torsoCFrame * CFrame.new(0.5, -2, 0)
-	Head.CFrame = torsoCFrame * CFrame.new(0, 1, 0)
+    if not RigModel or not RigModel.Parent then return end
+    
+    if Character and HumanoidRootPart then
+        if IsDesyncEnabled and IsVisualizeEnabled and desyncCFrame then
+            Torso.CFrame = desyncCFrame
+        else
+            Torso.CFrame = HumanoidRootPart.CFrame
+        end
+    end
+    local torsoCFrame = Torso.CFrame
+    LeftArm.CFrame = torsoCFrame * CFrame.new(-1.5, 0, 0)
+    RightArm.CFrame = torsoCFrame * CFrame.new(1.5, 0, 0)
+    LeftLeg.CFrame = torsoCFrame * CFrame.new(-0.5, -2, 0)
+    RightLeg.CFrame = torsoCFrame * CFrame.new(0.5, -2, 0)
+    Head.CFrame = torsoCFrame * CFrame.new(0, 1, 0)
 end
 
 local function UpdateTransparency()
-	local transparency = IsVisualizeEnabled and IsDesyncEnabled and (FillTransparency / 100) or 1
-	for _, part in pairs({Torso, LeftArm, RightArm, LeftLeg, RightLeg, Head}) do
-		if part then
-			part.Transparency = transparency
-		end
-	end
+    local transparency = IsVisualizeEnabled and IsDesyncEnabled and (FillTransparency / 100) or 1
+    for _, part in pairs({Torso, LeftArm, RightArm, LeftLeg, RightLeg, Head}) do
+        if part then
+            part.Transparency = transparency
+        end
+    end
 end
 
 local function ApplyDesync()
-	if not HumanoidRootPart or Humanoid.Health <= 0 then return end
-	local currentCFrame = HumanoidRootPart.CFrame
-	local newCFrame
-	local randomX = math.random(-RandomRange, RandomRange)
-	local randomY = math.random(-RandomRange, RandomRange)
-	local randomZ = math.random(-RandomRange, RandomRange)
-	if UseRelativeOffset then
-		local lookVector = currentCFrame.LookVector
-		local rightVector = currentCFrame.RightVector
-		newCFrame = CFrame.new(
-			currentCFrame.Position + 
-			(rightVector * (OffsetX + randomX)) + 
-			(Vector3.new(0, OffsetY + randomY, 0)) + 
-			(lookVector * (OffsetZ + randomZ))
-		) * currentCFrame.Rotation * CFrame.fromOrientation(math.rad(RotationX), math.rad(RotationY), math.rad(RotationZ))
-	else
-		newCFrame = CFrame.new(
-			currentCFrame.Position + Vector3.new(OffsetX + randomX, OffsetY + randomY, OffsetZ + randomZ)
-		) * currentCFrame.Rotation * CFrame.fromOrientation(math.rad(RotationX), math.rad(RotationY), math.rad(RotationZ))
-	end
-	if newCFrame then
-		HumanoidRootPart.CFrame = newCFrame
-		RunService.RenderStepped:Wait()
-		HumanoidRootPart.CFrame = currentCFrame
-		UpdateRig(newCFrame)
-	end
+    if not HumanoidRootPart then return end
+    local currentCFrame = HumanoidRootPart.CFrame
+    local newCFrame
+    local randomX = math.random(-RandomRange, RandomRange)
+    local randomY = math.random(-RandomRange, RandomRange)
+    local randomZ = math.random(-RandomRange, RandomRange)
+    
+    if UseRelativeOffset then
+        local lookVector = currentCFrame.LookVector
+        local rightVector = currentCFrame.RightVector
+        newCFrame = CFrame.new(
+            currentCFrame.Position + 
+            (rightVector * (OffsetX + randomX)) + 
+            (Vector3.new(0, OffsetY + randomY, 0)) + 
+            (lookVector * (OffsetZ + randomZ))
+        ) * currentCFrame.Rotation * CFrame.fromOrientation(math.rad(RotationX), math.rad(RotationY), math.rad(RotationZ))
+    else
+        newCFrame = CFrame.new(
+            currentCFrame.Position + Vector3.new(OffsetX + randomX, OffsetY + randomY, OffsetZ + randomZ)
+        ) * currentCFrame.Rotation * CFrame.fromOrientation(math.rad(RotationX), math.rad(RotationY), math.rad(RotationZ))
+    end
+    
+    if newCFrame then
+        HumanoidRootPart.CFrame = newCFrame
+        RunService.RenderStepped:Wait()
+        HumanoidRootPart.CFrame = currentCFrame
+        UpdateRig(newCFrame)
+    end
 end
 
 local function ApplyTransparency(newTransparency)
-	FillTransparency = newTransparency
-	UpdateTransparency()
+    FillTransparency = newTransparency
+    UpdateTransparency()
 end
 
 LocalPlayer.CharacterAdded:Connect(function(newCharacter)
-	Character = newCharacter
-	HumanoidRootPart = newCharacter:WaitForChild("HumanoidRootPart")
-	Humanoid = newCharacter:WaitForChild("Humanoid")
-	Animator = newCharacter:WaitForChild("Animator")
-	handleAnimation()
+    Character = newCharacter
+    HumanoidRootPart = newCharacter:WaitForChild("HumanoidRootPart")
+    Humanoid = newCharacter:WaitForChild("Humanoid")
+    Animator = Humanoid:WaitForChild("Animator")
+    handleAnimation()
+    
+    
+    Humanoid.HealthChanged:Connect(function(health)
+        if health <= 0 then
+            if DesyncConnection then
+                DesyncConnection:Disconnect()
+                DesyncConnection = nil
+            end
+            IsDesyncActive = false
+            if RigModel then
+                RigModel:Destroy()
+            end
+            UpdateRig(nil)
+            
+            handleAnimation()
+        else
+            if IsDesyncEnabled and IsDesyncActive and not DesyncConnection then
+                if not RigModel.Parent then
+                    CreateRigModel()
+                end
+                DesyncConnection = RunService.Heartbeat:Connect(ApplyDesync)
+                handleAnimation()
+            end
+        end
+    end)
 end)
 
+
 Humanoid.HealthChanged:Connect(function(health)
-	if health <= 0 then
-		if DesyncConnection then
-			DesyncConnection:Disconnect()
-			DesyncConnection = nil
-		end
-		IsDesyncActive = false
-		if RigModel then
-			RigModel:Destroy()
-		end
-		UpdateRig(nil)
-	else
-		if IsDesyncEnabled and IsDesyncActive and not DesyncConnection then
-			if not RigModel.Parent then
-				CreateRigModel()
-			end
-			DesyncConnection = RunService.Heartbeat:Connect(ApplyDesync)
-			handleAnimation()
-		end
-	end
+    if health <= 0 then
+        if DesyncConnection then
+            DesyncConnection:Disconnect()
+            DesyncConnection = nil
+        end
+        IsDesyncActive = false
+        if RigModel then
+            RigModel:Destroy()
+        end
+        UpdateRig(nil)
+        
+        handleAnimation()
+    else
+        if IsDesyncEnabled and IsDesyncActive and not DesyncConnection then
+            if not RigModel.Parent then
+                CreateRigModel()
+            end
+            DesyncConnection = RunService.Heartbeat:Connect(ApplyDesync)
+            handleAnimation()
+        end
+    end
 end)
 
 local underground = Pages["Antiaim"]:Section({Name = "Offset Desync", Side = "Left", Zindex = 5})
 underground:Toggle({
-	Name = "UnderGround Anti-Aim",
-	Flag = "DesyncToggle",
-	Callback = function(value)
-		IsDesyncEnabled = value
-		showToggleNotification("UnderGround Anti-Aim", value)
-		playToggleSound(value)
-		if not value then
-			IsDesyncActive = false
-			if RigModel then
-				RigModel:Destroy()
-			end
-			if DesyncConnection then
-				DesyncConnection:Disconnect()
-				DesyncConnection = nil
-			end
-			UpdateRig(nil)
-			handleAnimation()
-		else
-			if IsDesyncActive and not DesyncConnection and Humanoid.Health > 0 then
-				if not RigModel.Parent then
-					CreateRigModel()
-				end
-				DesyncConnection = RunService.Heartbeat:Connect(ApplyDesync)
-				handleAnimation()
-			end
-			UpdateTransparency()
-		end
-	end
+    Name = "UnderGround Anti-Aim",
+    Flag = "DesyncToggle",
+    Callback = function(value)
+        IsDesyncEnabled = value
+        showToggleNotification("UnderGround Anti-Aim", value)
+        playToggleSound(value)
+        if not value then
+            IsDesyncActive = false
+            if RigModel then
+                RigModel:Destroy()
+            end
+            if DesyncConnection then
+                DesyncConnection:Disconnect()
+                DesyncConnection = nil
+            end
+            UpdateRig(nil)
+            handleAnimation()
+        else
+            if IsDesyncActive and not DesyncConnection then
+                if not RigModel.Parent then
+                    CreateRigModel()
+                end
+                DesyncConnection = RunService.Heartbeat:Connect(ApplyDesync)
+                handleAnimation()
+            end
+            UpdateTransparency()
+        end
+    end
 }):Keybind({
-	Name = "UnderGround",
-	Flag = "UnderGround",
-	Mode = "Toggle",
-	Callback = function()
-		if IsDesyncEnabled and Humanoid.Health > 0 then
-			IsDesyncActive = not IsDesyncActive
-			handleAnimation()
-			if IsDesyncActive then
-				if not RigModel.Parent then
-					CreateRigModel()
-				end
-				if not DesyncConnection then
-					DesyncConnection = RunService.Heartbeat:Connect(ApplyDesync)
-				end
-			else
-				if RigModel then
-					RigModel:Destroy()
-				end
-				if DesyncConnection then
-					DesyncConnection:Disconnect()
-					DesyncConnection = nil
-				end
-				UpdateRig(nil)
-			end
-			UpdateTransparency()
-		end
-	end
+    Name = "UnderGround",
+    Flag = "UnderGround",
+    Mode = "Toggle",
+    Callback = function()
+        if IsDesyncEnabled then
+            IsDesyncActive = not IsDesyncActive
+            handleAnimation()
+            if IsDesyncActive then
+                if not RigModel.Parent then
+                    CreateRigModel()
+                end
+                if not DesyncConnection then
+                    DesyncConnection = RunService.Heartbeat:Connect(ApplyDesync)
+                end
+            else
+                if RigModel then
+                    RigModel:Destroy()
+                end
+                if DesyncConnection then
+                    DesyncConnection:Disconnect()
+                    DesyncConnection = nil
+                end
+                UpdateRig(nil)
+            end
+            UpdateTransparency()
+        end
+    end
 })
 underground:Toggle({
-	Name = "Visualize Desync",
-	Flag = "VisualizeDesync",
-	Default = false,
-	Callback = function(value)
-		IsVisualizeEnabled = value
-		showToggleNotification("Visualize Desync", value)
-		playToggleSound(value)
-		UpdateTransparency()
-		if IsDesyncEnabled then
-			UpdateRig(nil)
-		end
-	end
+    Name = "Visualize Desync",
+    Flag = "VisualizeDesync",
+    Default = false,
+    Callback = function(value)
+        IsVisualizeEnabled = value
+        showToggleNotification("Visualize Desync", value)
+        playToggleSound(value)
+        UpdateTransparency()
+        if IsDesyncEnabled then
+            UpdateRig(nil)
+        end
+    end
 })
 underground:Colorpicker({
-	Name = "Fill Color",
-	Flag = "Desyncfillcolor",
-	Default = Color3.fromRGB(115, 100, 215),
-	Callback = function(value)
-		FillColor = value
-		ApplyColor(value)
-	end
+    Name = "Fill Color",
+    Flag = "Desyncfillcolor",
+    Default = Color3.fromRGB(115, 100, 215),
+    Callback = function(value)
+        FillColor = value
+        ApplyColor(value)
+    end
 })
 underground:Slider({
-	Name = "Fill Transparency",
-	Suffix = "%",
-	Min = 0,
-	Max = 100,
-	Default = 0,
-	Increment = 1,
-	Flag = "FillTransparencydesync",
-	Callback = function(value)
-		ApplyTransparency(value)
-	end
+    Name = "Fill Transparency",
+    Suffix = "%",
+    Min = 0,
+    Max = 100,
+    Default = 0,
+    Increment = 1,
+    Flag = "FillTransparencydesync",
+    Callback = function(value)
+        ApplyTransparency(value)
+    end
 })
 local game = game
 local upangleSettings = {}
